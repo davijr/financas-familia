@@ -115,15 +115,15 @@
     Feito com ❤️ — <a href="https://github.com/davijr/financas-familia" target="_blank" rel="noopener">GitHub</a>
   </footer>
 
-  <!-- Libraries -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.min.mjs" type="module"></script>
+  <!-- Libraries: jsPDF (UMD) loaded first -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 
-  <!-- App (loaded after libs, using a small bootstrap to handle pdf.js ESM) -->
+  <!-- App bootstrap: import pdf.js ESM, then load app.js after both libs are ready -->
   <script type="module">
     import * as pdfjsModule from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.min.mjs';
     window.pdfjsLib = pdfjsModule;
-    // Load app.js after pdfjsLib is available
+    window.jspdf = window.jspdf || self.jspdf;
+
     const script = document.createElement('script');
     script.src = 'js/app.js';
     document.body.appendChild(script);
