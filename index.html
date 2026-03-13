@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Password Remover — Remova senhas de PDFs online</title>
+  <meta name="description" content="Ferramenta gratuita e 100% client-side para remover senhas de arquivos PDF. Nenhum dado é enviado para servidores — todo processamento ocorre no seu navegador." />
+  <meta name="keywords" content="PDF, remover senha, desbloquear PDF, password remover, client-side, privacidade" />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#0a0a0f" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="PDF Password Remover" />
+  <meta property="og:description" content="Remova senhas de PDFs gratuitamente, direto no navegador." />
+  <meta property="og:type" content="website" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Favicon (emoji-based inline SVG) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔓</text></svg>" />
+</head>
+<body>
+
+  <main class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header__icon">🔓</div>
+      <h1 class="header__title">PDF Password Remover</h1>
+      <p class="header__subtitle">
+        Remova senhas de arquivos PDF de forma gratuita e segura.
+        Todo o processamento acontece <strong>no seu navegador</strong> — nenhum arquivo é enviado para servidores.
+      </p>
+      <span class="header__badge">
+        <span class="header__badge-dot"></span>
+        100% client-side • seus dados ficam no seu computador
+      </span>
+    </header>
+
+    <!-- Main Card -->
+    <section class="card">
+      <!-- Dropzone -->
+      <div class="dropzone" id="dropzone">
+        <div class="dropzone__icon">📄</div>
+        <p class="dropzone__text">
+          <strong>Clique para selecionar</strong> ou arraste seu PDF aqui
+          <span class="dropzone__hint">Apenas arquivos .pdf</span>
+        </p>
+        <input type="file" accept=".pdf,application/pdf" class="dropzone__file-input" id="fileInput" />
+      </div>
+
+      <!-- File Info -->
+      <div class="file-info" id="fileInfo">
+        <span class="file-info__icon">📎</span>
+        <div class="file-info__details">
+          <div class="file-info__name" id="fileName"></div>
+          <div class="file-info__size" id="fileSize"></div>
+        </div>
+        <button class="file-info__remove" id="removeFile" title="Remover arquivo">✕</button>
+      </div>
+
+      <!-- Password -->
+      <div class="password-section" id="passwordSection">
+        <label class="password-section__label" for="passwordInput">🔑 Senha do PDF</label>
+        <div class="password-section__input-wrapper">
+          <input
+            type="password"
+            id="passwordInput"
+            class="password-section__input"
+            placeholder="Digite a senha do PDF"
+            autocomplete="off"
+          />
+          <button class="password-section__toggle" id="togglePassword" type="button" title="Mostrar/ocultar senha">👁️</button>
+        </div>
+      </div>
+
+      <!-- Unlock Button -->
+      <button class="btn-primary" id="unlockBtn" disabled>
+        🔓 Remover Senha
+      </button>
+
+      <!-- Progress -->
+      <div class="progress-section" id="progressSection">
+        <div class="progress-bar">
+          <div class="progress-bar__fill" id="progressBarFill"></div>
+        </div>
+        <div class="progress-text" id="progressText"></div>
+      </div>
+
+      <!-- Status Message -->
+      <div class="status-message" id="statusMessage">
+        <span class="status-message__icon" id="statusIcon"></span>
+        <span id="statusText"></span>
+      </div>
+
+      <!-- Download -->
+      <div class="download-section" id="downloadSection">
+        <button class="btn-download" id="downloadBtn">
+          ⬇️ Baixar PDF sem senha
+        </button>
+        <button class="btn-reset" id="resetBtn">
+          Processar outro arquivo
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    Feito com ❤️ — <a href="https://github.com/davijr/financas-familia" target="_blank" rel="noopener">GitHub</a>
+  </footer>
+
+  <!-- Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.min.mjs" type="module"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+
+  <!-- App (loaded after libs, using a small bootstrap to handle pdf.js ESM) -->
+  <script type="module">
+    import * as pdfjsModule from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.min.mjs';
+    window.pdfjsLib = pdfjsModule;
+    // Load app.js after pdfjsLib is available
+    const script = document.createElement('script');
+    script.src = 'js/app.js';
+    document.body.appendChild(script);
+  </script>
+</body>
+</html>
