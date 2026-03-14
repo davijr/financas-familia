@@ -1,20 +1,18 @@
 /**
  * PDF Password Remover — Client-Side
- * Uses pdf.js to decrypt and render pages, then jsPDF to assemble a new unprotected PDF.
+ * Uses pdf.js to decrypt and render pages, then jsPDF to assemble new unprotected PDFs.
+ * Supports batch processing using JSZip.
  */
 
 // ===== STATE =====
-let selectedFile = null;
+let selectedFiles = [];
 let processedBlobUrl = null;
 let processedFileName = null;
 
 // ===== DOM ELEMENTS =====
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('fileInput');
-const fileInfo = document.getElementById('fileInfo');
-const fileName = document.getElementById('fileName');
-const fileSize = document.getElementById('fileSize');
-const removeFileBtn = document.getElementById('removeFile');
+const fileList = document.getElementById('fileList');
 
 const passwordSection = document.getElementById('passwordSection');
 const passwordInput = document.getElementById('passwordInput');
@@ -68,7 +66,7 @@ function setProgress(percent, text) {
 }
 
 function resetAll() {
-  selectedFile = null;
+  selectedFiles = [];
   if (processedBlobUrl) {
     URL.revokeObjectURL(processedBlobUrl);
     processedBlobUrl = null;
@@ -76,7 +74,7 @@ function resetAll() {
   processedFileName = null;
   fileInput.value = '';
 
-  hideElement(fileInfo);
+  renderFileList();
   hideElement(passwordSection);
   hideElement(progressSection);
   hideElement(downloadSection);
@@ -91,26 +89,87 @@ function resetAll() {
 }
 
 // ===== FILE HANDLING =====
-function handleFile(file) {
-  if (!file) return;
+function handleFiles(files) {
+  if (!files || files.length === 0) return;
 
-  if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-    showStatus('error', '⚠️', 'Por favor, selecione um arquivo PDF válido.');
+  let addedCount = 0;
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+      // Prevent duplicates by name
+      if (!selectedFiles.some(f => f.name === file.name)) {
+        selectedFiles.push(file);
+        addedCount++;
+      }
+    }
+  }
+
+  if (addedCount > 0) {
+    renderFileList();
+    hideStatus();
+    showElement(passwordSection);
+    
+    unlockBtn.textContent = selectedFiles.length > 1 
+      ? `🔓 Remover Senha (${selectedFiles.length} arquivos)` 
+      : `🔓 Remover Senha`;
+      
+    unlockBtn.disabled = false;
+    unlockBtn.style.display = '';
+    hideElement(downloadSection);
+    passwordInput.focus();
+  } else if (files.length > 0 && selectedFiles.length === 0) {
+    showStatus('error', '⚠️', 'Por favor, selecione apenas arquivos PDF válidos.');
+  }
+}
+
+function removeFile(index) {
+  selectedFiles.splice(index, 1);
+  renderFileList();
+  
+  if (selectedFiles.length === 0) {
+    resetAll();
+  } else {
+    unlockBtn.textContent = selectedFiles.length > 1 
+      ? `🔓 Remover Senha (${selectedFiles.length} arquivos)` 
+      : `🔓 Remover Senha`;
+  }
+}
+
+function renderFileList() {
+  fileList.innerHTML = '';
+  
+  if (selectedFiles.length === 0) {
+    hideElement(fileList);
     return;
   }
 
-  selectedFile = file;
-  fileName.textContent = file.name;
-  fileSize.textContent = formatFileSize(file.size);
+  showElement(fileList);
+  
+  selectedFiles.forEach((file, index) => {
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    item.id = `file-item-${index}`;
+    
+    item.innerHTML = `
+      <span class="file-item__icon">📄</span>
+      <div class="file-item__details">
+        <div class="file-item__name" title="${file.name}">${file.name}</div>
+        <div class="file-item__size">${formatFileSize(file.size)}</div>
+      </div>
+      <span class="file-item__status" id="file-status-${index}"></span>
+      <button class="file-item__remove" onclick="removeFile(${index})" title="Remover arquivo">✕</button>
+    `;
+    
+    fileList.appendChild(item);
+  });
+}
 
-  hideStatus();
-  showElement(fileInfo);
-  showElement(passwordSection);
-  unlockBtn.disabled = false;
-  unlockBtn.style.display = '';
-  hideElement(downloadSection);
-
-  passwordInput.focus();
+function updateFileStatus(index, status, isError = false) {
+  const statusEl = document.getElementById(`file-status-${index}`);
+  if (statusEl) {
+    statusEl.textContent = status;
+    statusEl.className = `file-item__status ${isError ? 'error' : 'success'}`;
+  }
 }
 
 // Drag & Drop
@@ -126,8 +185,7 @@ dropzone.addEventListener('dragleave', () => {
 dropzone.addEventListener('drop', (e) => {
   e.preventDefault();
   dropzone.classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  handleFile(file);
+  handleFiles(e.dataTransfer.files);
 });
 
 dropzone.addEventListener('click', () => {
@@ -135,13 +193,7 @@ dropzone.addEventListener('click', () => {
 });
 
 fileInput.addEventListener('change', (e) => {
-  handleFile(e.target.files[0]);
-});
-
-// Remove file
-removeFileBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  resetAll();
+  handleFiles(e.target.files);
 });
 
 // Toggle password visibility
@@ -159,6 +211,9 @@ passwordInput.addEventListener('keydown', (e) => {
   }
 });
 
+// Expose removeFile to global scope for inline onclick handler
+window.removeFile = removeFile;
+
 // Reset
 resetBtn.addEventListener('click', resetAll);
 
@@ -173,122 +228,173 @@ downloadBtn.addEventListener('click', () => {
   document.body.removeChild(a);
 });
 
+// ===== CORE PROCESSING FUNCTION =====
+async function processSingleFile(file, password, fileIndex, totalFiles) {
+  const baseProgress = (fileIndex / totalFiles) * 100;
+  const progressShare = 100 / totalFiles;
+  
+  const updateProgress = (localPercent, text) => {
+    const overallProgress = baseProgress + (localPercent * progressShare / 100);
+    setProgress(overallProgress, text);
+  };
+
+  updateProgress(5, `Processando: ${file.name}...`);
+  updateFileStatus(fileIndex, 'Processando...');
+
+  const arrayBuffer = await file.arrayBuffer();
+
+  updateProgress(10, `Descriptografando: ${file.name}...`);
+  
+  const loadingTask = pdfjsLib.getDocument({
+    data: arrayBuffer,
+    password: password || undefined,
+  });
+
+  let pdfDoc;
+  try {
+    pdfDoc = await loadingTask.promise;
+  } catch (err) {
+    let errorMsg = 'Erro desconhecido';
+    if (err.name === 'PasswordException') {
+      if (err.code === 1) {
+        errorMsg = 'Senha ausente';
+      } else {
+        errorMsg = 'Senha incorreta';
+      }
+    } else {
+      errorMsg = 'Arquivo corrompido';
+    }
+    updateFileStatus(fileIndex, 'Falhou', true);
+    throw new Error(`${file.name}: ${errorMsg}`);
+  }
+
+  const totalPages = pdfDoc.numPages;
+  updateProgress(15, `Desenhando ${totalPages} página(s)...`);
+
+  const firstPage = await pdfDoc.getPage(1);
+  const scale = 2; 
+  const firstViewport = firstPage.getViewport({ scale });
+
+  const pxToMm = 25.4 / (72 * scale);
+  const pageWidthMm = firstViewport.width * pxToMm;
+  const pageHeightMm = firstViewport.height * pxToMm;
+
+  const orientation = pageWidthMm > pageHeightMm ? 'l' : 'p';
+  const pdf = new window.jspdf.jsPDF({
+    orientation,
+    unit: 'mm',
+    format: [pageWidthMm, pageHeightMm],
+  });
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  for (let i = 1; i <= totalPages; i++) {
+    const progress = 15 + Math.round((i / totalPages) * 75);
+    updateProgress(progress, `Renderizando pág ${i}/${totalPages} de ${file.name}...`);
+
+    const page = await pdfDoc.getPage(i);
+    const viewport = page.getViewport({ scale });
+
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    await page.render({ canvasContext: ctx, viewport }).promise;
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    const currentWidthMm = viewport.width * pxToMm;
+    const currentHeightMm = viewport.height * pxToMm;
+
+    if (i > 1) {
+      const pageOrientation = currentWidthMm > currentHeightMm ? 'l' : 'p';
+      pdf.addPage([currentWidthMm, currentHeightMm], pageOrientation);
+    }
+
+    pdf.addImage(imgData, 'JPEG', 0, 0, currentWidthMm, currentHeightMm);
+  }
+
+  updateProgress(95, `Finalizando ${file.name}...`);
+  updateFileStatus(fileIndex, 'Concluído', false);
+  
+  return pdf.output('blob');
+}
+
 // ===== MAIN PROCESS =====
 unlockBtn.addEventListener('click', async () => {
-  if (!selectedFile) return;
+  if (selectedFiles.length === 0) return;
 
   const password = passwordInput.value;
 
-  // UI: show progress, hide others
+  // UI Setup
   hideStatus();
   hideElement(downloadSection);
   showElement(progressSection);
   unlockBtn.disabled = true;
-  setProgress(5, 'Carregando PDF...');
+  
+  // Disable remove buttons during processing
+  document.querySelectorAll('.file-item__remove').forEach(btn => btn.style.display = 'none');
 
   try {
-    // 1. Read file as ArrayBuffer
-    const arrayBuffer = await selectedFile.arrayBuffer();
-
-    // 2. Load with pdf.js, providing password
-    setProgress(10, 'Descriptografando...');
-
-    const loadingTask = pdfjsLib.getDocument({
-      data: arrayBuffer,
-      password: password || undefined,
-    });
-
-    let pdfDoc;
-    try {
-      pdfDoc = await loadingTask.promise;
-    } catch (err) {
-      if (err.name === 'PasswordException') {
-        if (err.code === 1) {
-          // NEED_PASSWORD — no password was provided
-          showStatus('error', '🔒', 'Este PDF requer uma senha. Digite a senha acima.');
-        } else {
-          // INCORRECT_PASSWORD
-          showStatus('error', '❌', 'Senha incorreta. Tente novamente.');
-        }
-      } else {
-        showStatus('error', '⚠️', 'Erro ao abrir o PDF: ' + (err.message || err));
+    const processedBlobs = [];
+    const errors = [];
+    
+    // Process files sequentially
+    for (let i = 0; i < selectedFiles.length; i++) {
+      try {
+        const fileBlob = await processSingleFile(selectedFiles[i], password, i, selectedFiles.length);
+        processedBlobs.push({
+          name: selectedFiles[i].name.replace(/\.pdf$/i, '') + '_sem_senha.pdf',
+          blob: fileBlob
+        });
+      } catch (err) {
+        console.error(err);
+        errors.push(err.message);
       }
-      hideElement(progressSection);
-      unlockBtn.disabled = false;
-      return;
     }
 
-    const totalPages = pdfDoc.numPages;
-    setProgress(15, `Processando ${totalPages} página(s)...`);
-
-    // 3. Render each page to canvas, then add to jsPDF
-    // Get first page to determine dimensions
-    const firstPage = await pdfDoc.getPage(1);
-    const scale = 2; // Higher scale = better quality
-    const firstViewport = firstPage.getViewport({ scale });
-
-    // Create jsPDF with first page dimensions (in mm)
-    const pxToMm = 25.4 / (72 * scale); // 72 DPI base
-    const pageWidthMm = firstViewport.width * pxToMm;
-    const pageHeightMm = firstViewport.height * pxToMm;
-
-    const orientation = pageWidthMm > pageHeightMm ? 'l' : 'p';
-    const pdf = new jspdf.jsPDF({
-      orientation,
-      unit: 'mm',
-      format: [pageWidthMm, pageHeightMm],
-    });
-
-    // Canvas for rendering
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-
-    for (let i = 1; i <= totalPages; i++) {
-      const progress = 15 + Math.round((i / totalPages) * 75);
-      setProgress(progress, `Renderizando página ${i} de ${totalPages}...`);
-
-      const page = await pdfDoc.getPage(i);
-      const viewport = page.getViewport({ scale });
-
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-
-      await page.render({ canvasContext: ctx, viewport }).promise;
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.92);
-
-      const currentWidthMm = viewport.width * pxToMm;
-      const currentHeightMm = viewport.height * pxToMm;
-
-      if (i > 1) {
-        const pageOrientation = currentWidthMm > currentHeightMm ? 'l' : 'p';
-        pdf.addPage([currentWidthMm, currentHeightMm], pageOrientation);
-      }
-
-      pdf.addImage(imgData, 'JPEG', 0, 0, currentWidthMm, currentHeightMm);
+    if (processedBlobs.length === 0) {
+      throw new Error(errors[0] || 'Nenhum arquivo pôde ser processado.');
     }
 
-    // 4. Generate blob and download link
-    setProgress(95, 'Finalizando...');
+    setProgress(98, 'Preparando download...');
 
-    const blob = pdf.output('blob');
-    processedBlobUrl = URL.createObjectURL(blob);
-    processedFileName = selectedFile.name.replace(/\.pdf$/i, '') + '_sem_senha.pdf';
+    if (processedBlobs.length === 1) {
+      // Single file download
+      processedBlobUrl = URL.createObjectURL(processedBlobs[0].blob);
+      processedFileName = processedBlobs[0].name;
+    } else {
+      // Multiple files -> ZIP
+      const zip = new JSZip();
+      processedBlobs.forEach(item => {
+        zip.file(item.name, item.blob);
+      });
+      
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      processedBlobUrl = URL.createObjectURL(zipBlob);
+      processedFileName = 'PDFs_sem_senha.zip';
+    }
 
     setProgress(100, 'Concluído!');
-
-    // Small delay for UI feel
-    await new Promise((r) => setTimeout(r, 400));
+    await new Promise((r) => setTimeout(r, 400)); // UI delay
 
     hideElement(progressSection);
     unlockBtn.style.display = 'none';
-    showStatus('success', '✅', 'PDF desbloqueado com sucesso!');
+    
+    if (errors.length > 0) {
+      showStatus('warning', '⚠️', `Concluído com avisos: ${processedBlobs.length} sucesso(s), ${errors.length} erro(s).`);
+    } else {
+      showStatus('success', '✅', 'Processamento concluído com sucesso!');
+    }
+    
     showElement(downloadSection);
 
   } catch (err) {
-    console.error('Unexpected error:', err);
-    showStatus('error', '⚠️', 'Erro inesperado: ' + (err.message || err));
+    console.error('Batch process error:', err);
+    showStatus('error', '❌', err.message || 'Erro inesperado.');
     hideElement(progressSection);
     unlockBtn.disabled = false;
+    
+    // Restore remove buttons
+    document.querySelectorAll('.file-item__remove').forEach(btn => btn.style.display = '');
   }
 });

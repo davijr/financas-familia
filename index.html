@@ -48,31 +48,26 @@
       <div class="dropzone" id="dropzone">
         <div class="dropzone__icon">📄</div>
         <p class="dropzone__text">
-          <strong>Clique para selecionar</strong> ou arraste seu PDF aqui
+          <strong>Clique para selecionar</strong> ou arraste seus PDFs aqui
           <span class="dropzone__hint">Apenas arquivos .pdf</span>
         </p>
-        <input type="file" accept=".pdf,application/pdf" class="dropzone__file-input" id="fileInput" />
+        <input type="file" accept=".pdf,application/pdf" class="dropzone__file-input" id="fileInput" multiple />
       </div>
 
-      <!-- File Info -->
-      <div class="file-info" id="fileInfo">
-        <span class="file-info__icon">📎</span>
-        <div class="file-info__details">
-          <div class="file-info__name" id="fileName"></div>
-          <div class="file-info__size" id="fileSize"></div>
-        </div>
-        <button class="file-info__remove" id="removeFile" title="Remover arquivo">✕</button>
+      <!-- File List -->
+      <div class="file-list" id="fileList">
+        <!-- Manipulated via JS -->
       </div>
 
       <!-- Password -->
       <div class="password-section" id="passwordSection">
-        <label class="password-section__label" for="passwordInput">🔑 Senha do PDF</label>
+        <label class="password-section__label" for="passwordInput">🔑 Senha dos PDFs</label>
         <div class="password-section__input-wrapper">
           <input
             type="password"
             id="passwordInput"
             class="password-section__input"
-            placeholder="Digite a senha do PDF"
+            placeholder="Digite a senha (mesma para todos)"
             autocomplete="off"
           />
           <button class="password-section__toggle" id="togglePassword" type="button" title="Mostrar/ocultar senha">👁️</button>
@@ -101,10 +96,10 @@
       <!-- Download -->
       <div class="download-section" id="downloadSection">
         <button class="btn-download" id="downloadBtn">
-          ⬇️ Baixar PDF sem senha
+          ⬇️ Baixar Arquivo(s)
         </button>
         <button class="btn-reset" id="resetBtn">
-          Processar outro arquivo
+          Novo Processamento
         </button>
       </div>
     </section>
@@ -115,7 +110,8 @@
     Feito com ❤️ — <a href="https://github.com/davijr/financas-familia" target="_blank" rel="noopener">GitHub</a>
   </footer>
 
-  <!-- Libraries: jsPDF (UMD) loaded first -->
+  <!-- Libraries: JSZip (UMD) & jsPDF (UMD) loaded first -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <!-- App bootstrap: import pdf.js ESM, then load app.js after both libs are ready -->
