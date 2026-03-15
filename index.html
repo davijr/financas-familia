@@ -3,126 +3,352 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PDF Password Remover — Remova senhas de PDFs online</title>
-  <meta name="description" content="Ferramenta gratuita e 100% client-side para remover senhas de arquivos PDF. Nenhum dado é enviado para servidores — todo processamento ocorre no seu navegador." />
-  <meta name="keywords" content="PDF, remover senha, desbloquear PDF, password remover, client-side, privacidade" />
+  <title>Finanças Família — Ferramentas gratuitas para o dia a dia</title>
+  <meta name="description" content="Ferramentas gratuitas e privadas para facilitar o dia a dia da família. Todo processamento ocorre no seu navegador." />
   <meta name="robots" content="index, follow" />
-  <meta name="theme-color" content="#0a0a0f" />
+  <meta name="theme-color" content="#080808" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>" />
 
-  <!-- Open Graph -->
-  <meta property="og:title" content="PDF Password Remover" />
-  <meta property="og:description" content="Remova senhas de PDFs gratuitamente, direto no navegador." />
-  <meta property="og:type" content="website" />
-
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  <!-- Favicon (emoji-based inline SVG) -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔓</text></svg>" />
+    :root {
+      --bg: #080808;
+      --surface: #111111;
+      --border: #222222;
+      --border-hover: #3a3a3a;
+      --gold: #c9a84c;
+      --gold-dim: #7a6230;
+      --text: #e8e2d6;
+      --muted: #666;
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+    }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Noise grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* Ambient glow */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -20vh;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60vw;
+      height: 60vh;
+      background: radial-gradient(ellipse, rgba(201,168,76,0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── Layout ─── */
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    /* ─── Nav ─── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2rem 0 0;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+      animation: fadeDown 0.6s ease both;
+    }
+
+    .nav-logo {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold);
+      text-decoration: none;
+    }
+
+    .nav-tag {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ─── Hero ─── */
+    .hero {
+      padding: 8rem 0 6rem;
+      animation: fadeUp 0.8s ease 0.1s both;
+    }
+
+    .hero-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .hero-label::before {
+      content: '';
+      display: block;
+      width: 2rem;
+      height: 1px;
+      background: var(--gold);
+    }
+
+    .hero-headline {
+      font-family: var(--font-display);
+      font-size: clamp(3.5rem, 8vw, 7rem);
+      font-weight: 900;
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      margin-bottom: 2.5rem;
+      color: var(--text);
+    }
+
+    .hero-headline em {
+      font-style: italic;
+      font-weight: 300;
+      color: var(--gold);
+    }
+
+    .hero-sub {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.8;
+      max-width: 42ch;
+      letter-spacing: 0.02em;
+    }
+
+    /* ─── Divider ─── */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+      animation: fadeUp 0.8s ease 0.2s both;
+    }
+
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .divider-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* ─── Tools Grid ─── */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      animation: fadeUp 0.8s ease 0.3s both;
+    }
+
+    .tool-card {
+      background: var(--bg);
+      padding: 2.5rem 2rem;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      transition: background 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tool-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(201,168,76,0.04) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .tool-card:hover {
+      background: var(--surface);
+    }
+
+    .tool-card:hover::after {
+      opacity: 1;
+    }
+
+    .tool-card:hover .tool-arrow {
+      transform: translate(3px, -3px);
+      color: var(--gold);
+    }
+
+    .tool-icon {
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .tool-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .tool-name {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.1;
+    }
+
+    .tool-arrow {
+      font-size: 1.1rem;
+      color: var(--muted);
+      transition: transform 0.2s ease, color 0.2s ease;
+      margin-top: 0.1rem;
+    }
+
+    .tool-desc {
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.7;
+      letter-spacing: 0.02em;
+    }
+
+    .tool-tag {
+      display: inline-block;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      border: 1px solid var(--gold-dim);
+      padding: 0.2rem 0.5rem;
+      margin-top: auto;
+    }
+
+    /* ─── Footer ─── */
+    footer {
+      padding: 3rem 0 2rem;
+      border-top: 1px solid var(--border);
+      margin-top: 6rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      animation: fadeUp 0.8s ease 0.4s both;
+    }
+
+    footer p {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    footer a {
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    footer a:hover { color: var(--gold); }
+
+    /* ─── Animations ─── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 520px) {
+      .hero { padding: 5rem 0 4rem; }
+      .tools-grid { grid-template-columns: 1fr; }
+      footer { flex-direction: column; gap: 0.75rem; text-align: center; }
+    }
+  </style>
 </head>
 <body>
+  <div class="page">
 
-  <main class="container">
-    <!-- Header -->
-    <header class="header">
-      <div class="header__icon">🔓</div>
-      <h1 class="header__title">PDF Password Remover</h1>
-      <p class="header__subtitle">
-        Remova senhas de arquivos PDF de forma gratuita e segura.
-        Todo o processamento acontece <strong>no seu navegador</strong> — nenhum arquivo é enviado para servidores.
+    <nav>
+      <a href="/" class="nav-logo">Finanças Família</a>
+      <span class="nav-tag">ferramentas • v1.0</span>
+    </nav>
+
+    <section class="hero">
+      <p class="hero-label">Bem-vindo</p>
+      <h1 class="hero-headline">
+        Hello,<br/><em>world.</em>
+      </h1>
+      <p class="hero-sub">
+        Ferramentas gratuitas e privadas para o dia a dia.
+        Tudo roda direto no seu navegador — nenhum dado é enviado para servidores.
       </p>
-      <span class="header__badge">
-        <span class="header__badge-dot"></span>
-        100% client-side • seus dados ficam no seu computador
-      </span>
-    </header>
-
-    <!-- Main Card -->
-    <section class="card">
-      <!-- Dropzone -->
-      <div class="dropzone" id="dropzone">
-        <div class="dropzone__icon">📄</div>
-        <p class="dropzone__text">
-          <strong>Clique para selecionar</strong> ou arraste seus PDFs aqui
-          <span class="dropzone__hint">Apenas arquivos .pdf</span>
-        </p>
-        <input type="file" accept=".pdf,application/pdf" class="dropzone__file-input" id="fileInput" multiple />
-      </div>
-
-      <!-- File List -->
-      <div class="file-list" id="fileList">
-        <!-- Manipulated via JS -->
-      </div>
-
-      <!-- Password -->
-      <div class="password-section" id="passwordSection">
-        <label class="password-section__label" for="passwordInput">🔑 Senha dos PDFs</label>
-        <div class="password-section__input-wrapper">
-          <input
-            type="password"
-            id="passwordInput"
-            class="password-section__input"
-            placeholder="Digite a senha (mesma para todos)"
-            autocomplete="off"
-          />
-          <button class="password-section__toggle" id="togglePassword" type="button" title="Mostrar/ocultar senha">👁️</button>
-        </div>
-      </div>
-
-      <!-- Unlock Button -->
-      <button class="btn-primary" id="unlockBtn" disabled>
-        🔓 Remover Senha
-      </button>
-
-      <!-- Progress -->
-      <div class="progress-section" id="progressSection">
-        <div class="progress-bar">
-          <div class="progress-bar__fill" id="progressBarFill"></div>
-        </div>
-        <div class="progress-text" id="progressText"></div>
-      </div>
-
-      <!-- Status Message -->
-      <div class="status-message" id="statusMessage">
-        <span class="status-message__icon" id="statusIcon"></span>
-        <span id="statusText"></span>
-      </div>
-
-      <!-- Download -->
-      <div class="download-section" id="downloadSection">
-        <button class="btn-download" id="downloadBtn">
-          ⬇️ Baixar Arquivo(s)
-        </button>
-        <button class="btn-reset" id="resetBtn">
-          Novo Processamento
-        </button>
-      </div>
     </section>
-  </main>
 
-  <!-- Footer -->
-  <footer class="footer">
-    Feito com ❤️ — <a href="https://github.com/davijr/financas-familia" target="_blank" rel="noopener">GitHub</a>
-  </footer>
+    <div class="divider">
+      <div class="divider-line"></div>
+      <span class="divider-label">ferramentas disponíveis</span>
+      <div class="divider-line"></div>
+    </div>
 
-  <!-- Libraries: JSZip (UMD) & jsPDF (UMD) loaded first -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <div class="tools-grid">
+      <a href="./remover-senha/" class="tool-card">
+        <div class="tool-icon">🔓</div>
+        <div class="tool-header">
+          <span class="tool-name">PDF<br/>Remover</span>
+          <span class="tool-arrow">↗</span>
+        </div>
+        <p class="tool-desc">
+          Remove senhas de arquivos PDF em lote. Processamento 100% local — sua senha nunca sai do dispositivo.
+        </p>
+        <span class="tool-tag">client-side • pdf</span>
+      </a>
+    </div>
 
-  <!-- App bootstrap: import pdf.js ESM, then load app.js after both libs are ready -->
-  <script type="module">
-    import * as pdfjsModule from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.min.mjs';
-    window.pdfjsLib = pdfjsModule;
-    window.jspdf = window.jspdf || self.jspdf;
+    <footer>
+      <p>© 2025 Finanças Família</p>
+      <p><a href="https://github.com/davijr/financas-familia" target="_blank" rel="noopener">GitHub</a></p>
+    </footer>
 
-    const script = document.createElement('script');
-    script.src = 'js/app.js';
-    document.body.appendChild(script);
-  </script>
+  </div>
 </body>
 </html>
