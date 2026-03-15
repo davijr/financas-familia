@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cartão Virtual</title>
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💌</text></svg>" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Lato:wght@300;400&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream: #f5ede0;
+      --gold: #d4a853;
+      --gold-light: #e8c97a;
+      --dark: #0d0b09;
+      --font-display: 'Cormorant Garamond', Georgia, serif;
+      --font-body: 'Lato', sans-serif;
+      --transition: 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #000;
+      font-family: var(--font-body);
+    }
+
+    /* ── Slides Container ── */
+    #slideshow {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* ── Individual Slide ── */
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition);
+      padding: 2rem;
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* ── Background Image ── */
+    .slide__bg {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      transition: transform 8s ease;
+      transform: scale(1.05);
+    }
+
+    .slide.active .slide__bg {
+      transform: scale(1);
+    }
+
+    /* Vignette overlay */
+    .slide__bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.6) 100%),
+        linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.55) 100%);
+    }
+
+    /* ── Content ── */
+    .slide__content {
+      position: relative;
+      z-index: 2;
+      max-width: 680px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .slide__number {
+      font-family: var(--font-body);
+      font-size: 0.65rem;
+      font-weight: 300;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 0.5rem;
+    }
+
+    .slide__title {
+      font-family: var(--font-display);
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-weight: 300;
+      font-style: italic;
+      line-height: 1.0;
+      color: var(--cream);
+      text-shadow: 0 2px 30px rgba(0,0,0,0.5);
+      letter-spacing: 0.01em;
+    }
+
+    .slide__divider {
+      width: 3rem;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .slide__phrase {
+      font-family: var(--font-display);
+      font-size: clamp(1rem, 2.5vw, 1.35rem);
+      font-weight: 300;
+      line-height: 1.75;
+      color: rgba(245, 237, 224, 0.88);
+      text-shadow: 0 1px 12px rgba(0,0,0,0.6);
+      max-width: 52ch;
+    }
+
+    /* ── Navigation ── */
+    .slide__nav {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      gap: 1rem;
+      margin-top: 3rem;
+      align-items: center;
+    }
+
+    .btn {
+      cursor: pointer;
+      border: none;
+      outline: none;
+      font-family: var(--font-body);
+      font-size: 0.7rem;
+      font-weight: 400;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 0.9rem 2rem;
+      transition: all 0.25s ease;
+    }
+
+    .btn-next {
+      background: var(--gold);
+      color: var(--dark);
+    }
+
+    .btn-next:hover {
+      background: var(--gold-light);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(212,168,83,0.35);
+    }
+
+    .btn-back {
+      background: transparent;
+      color: rgba(255,255,255,0.6);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .btn-back:hover {
+      color: var(--cream);
+      border-color: rgba(255,255,255,0.5);
+      transform: translateY(-1px);
+    }
+
+    /* ── Progress dots ── */
+    .progress {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.4rem;
+      z-index: 10;
+    }
+
+    .progress__dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      transition: all 0.3s ease;
+    }
+
+    .progress__dot.active {
+      background: var(--gold);
+      width: 20px;
+      border-radius: 2px;
+    }
+
+    /* ── Music indicator ── */
+    .music-indicator {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-body);
+      font-size: 0.65rem;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.5);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .music-indicator.visible { opacity: 1; }
+
+    .music-bars {
+      display: flex;
+      gap: 2px;
+      align-items: flex-end;
+      height: 12px;
+    }
+
+    .music-bars span {
+      display: block;
+      width: 2px;
+      background: var(--gold);
+      border-radius: 1px;
+      animation: musicBar 0.8s ease-in-out infinite alternate;
+    }
+
+    .music-bars span:nth-child(1) { height: 4px;  animation-delay: 0s; }
+    .music-bars span:nth-child(2) { height: 10px; animation-delay: 0.15s; }
+    .music-bars span:nth-child(3) { height: 7px;  animation-delay: 0.3s; }
+    .music-bars span:nth-child(4) { height: 12px; animation-delay: 0.1s; }
+
+    @keyframes musicBar {
+      from { transform: scaleY(0.3); }
+      to   { transform: scaleY(1); }
+    }
+
+    /* ── Content reveal animation ── */
+    .slide.active .slide__number,
+    .slide.active .slide__title,
+    .slide.active .slide__divider,
+    .slide.active .slide__phrase,
+    .slide.active .slide__nav {
+      animation: revealUp 0.8s ease both;
+    }
+
+    .slide.active .slide__number   { animation-delay: 0.2s; }
+    .slide.active .slide__title    { animation-delay: 0.35s; }
+    .slide.active .slide__divider  { animation-delay: 0.5s; }
+    .slide.active .slide__phrase   { animation-delay: 0.6s; }
+    .slide.active .slide__nav      { animation-delay: 0.75s; }
+
+    @keyframes revealUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      .slide__nav { flex-direction: column-reverse; width: 100%; }
+      .btn { width: 100%; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="slideshow"></div>
+
+  <!-- Progress dots -->
+  <div class="progress" id="progress"></div>
+
+  <!-- Music indicator -->
+  <div class="music-indicator" id="musicIndicator">
+    <div class="music-bars">
+      <span></span><span></span><span></span><span></span>
+    </div>
+    tocando
+  </div>
+
+  <!-- Audio elements -->
+  <audio id="music1" loop>
+    <!-- Substitua pelo caminho da música 1 -->
+    <!-- <source src="../audio/musica1.mp3" type="audio/mpeg" /> -->
+  </audio>
+  <audio id="music2" loop>
+    <!-- Substitua pelo caminho da música 2 -->
+    <!-- <source src="../audio/musica2.mp3" type="audio/mpeg" /> -->
+  </audio>
+
+  <script>
+    // ─────────────────────────────────────────────
+    //  SLIDES DATA — edite aqui o conteúdo
+    // ─────────────────────────────────────────────
+    const slides = [
+      {
+        title:  "Minha princesa",
+        phrase: "Você é a razão do meu viver. Cada presente tem uma intenção. Por isso, siga um passo de cada vez.",
+        // Substitua pela URL ou caminho da sua foto:
+        bg:     "https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?w=1600&q=80",
+        btnLabel: "Começar",
+        music:  null,
+      },
+      {
+        title:  "Primeiro passo",
+        phrase: "Abra a tampa e volte aqui.",
+        bg:     "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1600&q=80",
+        btnLabel: "Próximo",
+        music:  null,
+      },
+      {
+        title:  "Vestir e Usar",
+        phrase: "Coloque, sinta e use com todo o amor que foi escolhido para você.",
+        bg:     "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1600&q=80",
+        btnLabel: "Próximo",
+        music:  "music2",
+      },
+      {
+        title:  "Ler",
+        phrase: "Cada palavra foi escrita pensando em você.",
+        bg:     "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=1600&q=80",
+        btnLabel: "Próximo",
+        music:  "music2",
+      },
+      {
+        title:  "Escrever",
+        phrase: "Deixe seus pensamentos fluírem. Este espaço é só seu.",
+        bg:     "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=1600&q=80",
+        btnLabel: "Próximo",
+        music:  "music1",
+      },
+      {
+        title:  "Ser Usada",
+        phrase: "Este presente foi feito para estar com você todos os dias.",
+        bg:     "https://images.unsplash.com/photo-1513185158878-8d8c2a2a3da3?w=1600&q=80",
+        btnLabel: "Próximo",
+        music:  "music1",
+      },
+      {
+        title:  "Relaxar",
+        phrase: "Você merece parar, respirar e simplesmente ser.",
+        bg:     "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1600&q=80",
+        btnLabel: "Próximo",
+        music:  "music1",
+      },
+      {
+        title:  "Organizar & Executar",
+        phrase: "Com tudo no lugar, seus sonhos ficam mais perto.",
+        bg:     "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=1600&q=80",
+        btnLabel: "Próximo",
+        music:  "music1",
+      },
+      {
+        title:  "Com amor",
+        phrase: "O cartão está na tampa. Ele diz tudo o que o coração não coube em palavras.",
+        bg:     "https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?w=1600&q=80",
+        btnLabel: null, // último slide — sem botão próximo
+        music:  null,
+      },
+    ];
+
+    // ─────────────────────────────────────────────
+    //  STATE
+    // ─────────────────────────────────────────────
+    let current = 0;
+    const audios = {
+      music1: document.getElementById('music1'),
+      music2: document.getElementById('music2'),
+    };
+    const musicIndicator = document.getElementById('musicIndicator');
+
+    // ─────────────────────────────────────────────
+    //  BUILD DOM
+    // ─────────────────────────────────────────────
+    const slideshow = document.getElementById('slideshow');
+    const progressEl = document.getElementById('progress');
+
+    slides.forEach((s, i) => {
+      // Slide
+      const el = document.createElement('div');
+      el.className = 'slide' + (i === 0 ? ' active' : '');
+      el.dataset.index = i;
+
+      // Background
+      const bg = document.createElement('div');
+      bg.className = 'slide__bg';
+      bg.style.backgroundImage = `url('${s.bg}')`;
+      el.appendChild(bg);
+
+      // Content
+      const content = document.createElement('div');
+      content.className = 'slide__content';
+
+      content.innerHTML = `
+        <span class="slide__number">${String(i + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}</span>
+        <h1 class="slide__title">${s.title}</h1>
+        <div class="slide__divider"></div>
+        ${s.phrase ? `<p class="slide__phrase">${s.phrase}</p>` : ''}
+      `;
+
+      // Navigation
+      const nav = document.createElement('div');
+      nav.className = 'slide__nav';
+
+      if (i > 0) {
+        const back = document.createElement('button');
+        back.className = 'btn btn-back';
+        back.textContent = 'Voltar';
+        back.addEventListener('click', () => goTo(current - 1));
+        nav.appendChild(back);
+      }
+
+      if (s.btnLabel) {
+        const next = document.createElement('button');
+        next.className = 'btn btn-next';
+        next.textContent = s.btnLabel;
+        next.addEventListener('click', () => goTo(current + 1));
+        nav.appendChild(next);
+      }
+
+      content.appendChild(nav);
+      el.appendChild(content);
+      slideshow.appendChild(el);
+
+      // Progress dot
+      const dot = document.createElement('div');
+      dot.className = 'progress__dot' + (i === 0 ? ' active' : '');
+      dot.addEventListener('click', () => goTo(i));
+      progressEl.appendChild(dot);
+    });
+
+    // ─────────────────────────────────────────────
+    //  NAVIGATION
+    // ─────────────────────────────────────────────
+    function goTo(index) {
+      if (index < 0 || index >= slides.length) return;
+
+      const prevSlide = slides[current];
+      const nextSlide = slides[index];
+
+      // Stop previous music if changing track
+      if (prevSlide.music !== nextSlide.music) {
+        if (prevSlide.music && audios[prevSlide.music]) {
+          audios[prevSlide.music].pause();
+          audios[prevSlide.music].currentTime = 0;
+        }
+      }
+
+      // Update DOM
+      document.querySelectorAll('.slide').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.progress__dot').forEach((d, i) => {
+        d.classList.toggle('active', i === index);
+      });
+      document.querySelectorAll('.slide')[index].classList.add('active');
+
+      current = index;
+
+      // Play new music
+      if (nextSlide.music && audios[nextSlide.music]) {
+        const audio = audios[nextSlide.music];
+        if (audio.src && audio.paused) {
+          audio.play().catch(() => {}); // graceful fail if no src
+        }
+        musicIndicator.classList.add('visible');
+      } else {
+        musicIndicator.classList.remove('visible');
+      }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') goTo(current + 1);
+      if (e.key === 'ArrowLeft') goTo(current - 1);
+    });
+
+    // Touch/swipe support
+    let touchStartX = 0;
+    document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+    document.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 50) goTo(dx < 0 ? current + 1 : current - 1);
+    });
+  </script>
+
+</body>
+</html>
