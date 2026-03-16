@@ -9,48 +9,63 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Lato:wght@300;400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400;1,600&family=Josefin+Sans:wght@200;300;400&display=swap" rel="stylesheet" />
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --cream: #f5ede0;
-      --gold: #d4a853;
-      --gold-light: #e8c97a;
-      --dark: #0d0b09;
-      --font-display: 'Cormorant Garamond', Georgia, serif;
-      --font-body: 'Lato', sans-serif;
-      --transition: 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+      --cream:      #f7ede2;
+      --cream-dim:  rgba(247,237,226,0.82);
+      --gold:       #c9973e;
+      --gold-light: #e4b96a;
+      --gold-glow:  rgba(201,151,62,0.35);
+      --dark:       #0c0906;
+      --panel-bg:   rgba(12,9,6,0.38);
+      --font-serif: 'Cormorant Garamond', Georgia, serif;
+      --font-sans:  'Josefin Sans', sans-serif;
+      --ease:       cubic-bezier(0.45, 0, 0.15, 1);
     }
 
     html, body {
       width: 100%; height: 100%;
       overflow: hidden;
       background: #000;
-      font-family: var(--font-body);
     }
 
-    /* ── Slides Container ── */
+    /* ═══════════════════════════════════
+       TOP PROGRESS BAR
+    ═══════════════════════════════════ */
+    #topBar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      width: 0%;
+      background: linear-gradient(90deg, var(--gold), var(--gold-light));
+      z-index: 100;
+      transition: width 0.5s var(--ease);
+      box-shadow: 0 0 8px var(--gold-glow);
+    }
+
+    /* ═══════════════════════════════════
+       SLIDES
+    ═══════════════════════════════════ */
     #slideshow {
       position: relative;
       width: 100vw;
       height: 100vh;
     }
 
-    /* ── Individual Slide ── */
     .slide {
       position: absolute;
       inset: 0;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      text-align: center;
+      padding: 2rem;
       opacity: 0;
       pointer-events: none;
-      transition: opacity var(--transition);
-      padding: 2rem;
+      transition: opacity 0.75s var(--ease);
     }
 
     .slide.active {
@@ -58,169 +73,314 @@
       pointer-events: all;
     }
 
-    /* ── Background Image ── */
+    /* ── Background ── */
     .slide__bg {
       position: absolute;
       inset: 0;
       background-size: cover;
       background-position: center;
-      transition: transform 8s ease;
-      transform: scale(1.05);
+      transform: scale(1.06);
+      transition: transform 9s ease;
     }
 
-    .slide.active .slide__bg {
-      transform: scale(1);
+    .slide.active .slide__bg { transform: scale(1); }
+
+    /* Warm cinematic overlay */
+    .slide__bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        160deg,
+        rgba(30,15,5,0.55) 0%,
+        rgba(10,6,2,0.2)  45%,
+        rgba(30,15,5,0.65) 100%
+      );
     }
 
-    /* Vignette overlay */
+    /* Vignette */
     .slide__bg::after {
       content: '';
       position: absolute;
       inset: 0;
-      background:
-        radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.6) 100%),
-        linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.55) 100%);
+      background: radial-gradient(ellipse 80% 80% at 50% 50%, transparent 35%, rgba(5,2,0,0.72) 100%);
     }
 
-    /* ── Content ── */
-    .slide__content {
+    /* ── Bokeh particles ── */
+    .bokeh {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .bokeh__dot {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(220,175,100,0.55) 0%, transparent 70%);
+      filter: blur(2px);
+      animation: floatBokeh linear infinite;
+    }
+
+    @keyframes floatBokeh {
+      0%   { transform: translateY(0) scale(1);   opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 0.6; }
+      100% { transform: translateY(-110vh) scale(1.3); opacity: 0; }
+    }
+
+    /* ── Content Panel ── */
+    .slide__panel {
       position: relative;
-      z-index: 2;
-      max-width: 680px;
+      z-index: 3;
+      max-width: 640px;
       width: 100%;
+      padding: 3.5rem 3rem;
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px) saturate(1.4);
+      -webkit-backdrop-filter: blur(12px) saturate(1.4);
+      border: 1px solid rgba(201,151,62,0.18);
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 1.5rem;
+      text-align: center;
+      gap: 0;
     }
 
-    .slide__number {
-      font-family: var(--font-body);
-      font-size: 0.65rem;
-      font-weight: 300;
-      letter-spacing: 0.3em;
+    /* Corner ornaments */
+    .slide__panel::before,
+    .slide__panel::after {
+      content: '';
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-color: var(--gold);
+      border-style: solid;
+      opacity: 0.65;
+    }
+
+    .slide__panel::before {
+      top: -1px; left: -1px;
+      border-width: 2px 0 0 2px;
+    }
+
+    .slide__panel::after {
+      bottom: -1px; right: -1px;
+      border-width: 0 2px 2px 0;
+    }
+
+    /* Extra SVG corners (top-right, bottom-left) */
+    .corner-tr, .corner-bl {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-color: var(--gold);
+      border-style: solid;
+      opacity: 0.65;
+      z-index: 1;
+    }
+
+    .corner-tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+    .corner-bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+
+    /* ── Slide counter ── */
+    .slide__counter {
+      font-family: var(--font-sans);
+      font-size: 0.6rem;
+      font-weight: 200;
+      letter-spacing: 0.35em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.4);
-      margin-bottom: 0.5rem;
+      color: rgba(201,151,62,0.7);
+      margin-bottom: 1.5rem;
     }
 
+    /* ── Ornament ── */
+    .slide__ornament {
+      font-size: 1rem;
+      color: var(--gold);
+      opacity: 0.6;
+      letter-spacing: 0.6em;
+      margin-bottom: 1.2rem;
+      line-height: 1;
+    }
+
+    /* ── Title ── */
     .slide__title {
-      font-family: var(--font-display);
-      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-family: var(--font-serif);
+      font-size: clamp(2.4rem, 6vw, 4.8rem);
       font-weight: 300;
       font-style: italic;
-      line-height: 1.0;
+      line-height: 1.05;
       color: var(--cream);
-      text-shadow: 0 2px 30px rgba(0,0,0,0.5);
       letter-spacing: 0.01em;
+      text-shadow: 0 2px 40px rgba(0,0,0,0.4);
+      margin-bottom: 1.5rem;
     }
 
-    .slide__divider {
-      width: 3rem;
+    /* ── Gold divider ── */
+    .slide__rule {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      width: 100%;
+      max-width: 220px;
+      margin-bottom: 1.5rem;
+    }
+
+    .slide__rule-line {
+      flex: 1;
       height: 1px;
-      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      background: linear-gradient(90deg, transparent, rgba(201,151,62,0.5));
     }
 
+    .slide__rule-line:last-child {
+      background: linear-gradient(90deg, rgba(201,151,62,0.5), transparent);
+    }
+
+    .slide__rule-diamond {
+      width: 5px;
+      height: 5px;
+      background: var(--gold);
+      transform: rotate(45deg);
+      opacity: 0.8;
+      flex-shrink: 0;
+    }
+
+    /* ── Phrase ── */
     .slide__phrase {
-      font-family: var(--font-display);
-      font-size: clamp(1rem, 2.5vw, 1.35rem);
+      font-family: var(--font-serif);
+      font-size: clamp(0.95rem, 2.2vw, 1.2rem);
       font-weight: 300;
-      line-height: 1.75;
-      color: rgba(245, 237, 224, 0.88);
-      text-shadow: 0 1px 12px rgba(0,0,0,0.6);
-      max-width: 52ch;
+      line-height: 1.85;
+      color: var(--cream-dim);
+      max-width: 46ch;
+      text-shadow: 0 1px 16px rgba(0,0,0,0.5);
+      margin-bottom: 2.5rem;
     }
 
     /* ── Navigation ── */
     .slide__nav {
-      position: relative;
-      z-index: 2;
       display: flex;
-      gap: 1rem;
-      margin-top: 3rem;
+      gap: 0.875rem;
       align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
     .btn {
       cursor: pointer;
       border: none;
       outline: none;
-      font-family: var(--font-body);
-      font-size: 0.7rem;
-      font-weight: 400;
-      letter-spacing: 0.2em;
+      font-family: var(--font-sans);
+      font-size: 0.62rem;
+      font-weight: 300;
+      letter-spacing: 0.22em;
       text-transform: uppercase;
-      padding: 0.9rem 2rem;
-      transition: all 0.25s ease;
+      padding: 0.85rem 2.2rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
 
+    /* Next button with shimmer */
     .btn-next {
       background: var(--gold);
       color: var(--dark);
     }
 
-    .btn-next:hover {
-      background: var(--gold-light);
-      transform: translateY(-1px);
-      box-shadow: 0 8px 24px rgba(212,168,83,0.35);
+    .btn-next::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transition: left 0.5s ease;
     }
 
+    .btn-next:hover {
+      background: var(--gold-light);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(201,151,62,0.4);
+    }
+
+    .btn-next:hover::after { left: 150%; }
+
+    /* Back button */
     .btn-back {
       background: transparent;
-      color: rgba(255,255,255,0.6);
-      border: 1px solid rgba(255,255,255,0.2);
+      color: rgba(247,237,226,0.55);
+      border: 1px solid rgba(247,237,226,0.18);
     }
 
     .btn-back:hover {
       color: var(--cream);
-      border-color: rgba(255,255,255,0.5);
-      transform: translateY(-1px);
+      border-color: rgba(247,237,226,0.45);
+      transform: translateY(-2px);
     }
 
-    /* ── Progress dots ── */
-    .progress {
+    /* ═══════════════════════════════════
+       BOTTOM PROGRESS DOTS
+    ═══════════════════════════════════ */
+    #progress {
       position: fixed;
-      bottom: 2rem;
+      bottom: 1.75rem;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 0.4rem;
-      z-index: 10;
+      gap: 0.45rem;
+      z-index: 50;
+      align-items: center;
     }
 
     .progress__dot {
-      width: 4px;
-      height: 4px;
+      width: 5px;
+      height: 5px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.25);
-      transition: all 0.3s ease;
+      background: rgba(255,255,255,0.2);
+      transition: all 0.35s var(--ease);
+      cursor: pointer;
     }
+
+    .progress__dot:hover { background: rgba(255,255,255,0.5); }
 
     .progress__dot.active {
       background: var(--gold);
-      width: 20px;
-      border-radius: 2px;
+      width: 22px;
+      border-radius: 3px;
+      box-shadow: 0 0 6px var(--gold-glow);
     }
 
-    /* ── Music indicator ── */
-    .music-indicator {
+    /* ═══════════════════════════════════
+       MUSIC INDICATOR
+    ═══════════════════════════════════ */
+    #musicBtn {
       position: fixed;
-      top: 1.5rem;
-      right: 1.5rem;
-      z-index: 10;
+      top: 1.4rem;
+      right: 1.4rem;
+      z-index: 50;
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      font-family: var(--font-body);
-      font-size: 0.65rem;
-      font-weight: 300;
-      letter-spacing: 0.1em;
+      font-family: var(--font-sans);
+      font-size: 0.6rem;
+      font-weight: 200;
+      letter-spacing: 0.12em;
       color: rgba(255,255,255,0.5);
+      cursor: pointer;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(201,151,62,0.2);
+      padding: 0.45rem 0.8rem 0.45rem 0.6rem;
+      backdrop-filter: blur(6px);
       opacity: 0;
-      transition: opacity 0.5s ease;
+      pointer-events: none;
+      transition: opacity 0.5s ease, color 0.2s, border-color 0.2s;
+      outline: none;
     }
 
-    .music-indicator.visible { opacity: 1; }
+    #musicBtn.visible { opacity: 1; pointer-events: all; }
+    #musicBtn:hover { color: var(--cream); border-color: rgba(201,151,62,0.5); }
 
     .music-bars {
       display: flex;
@@ -234,139 +394,165 @@
       width: 2px;
       background: var(--gold);
       border-radius: 1px;
-      animation: musicBar 0.8s ease-in-out infinite alternate;
+      transform-origin: bottom;
     }
 
-    .music-bars span:nth-child(1) { height: 4px;  animation-delay: 0s; }
-    .music-bars span:nth-child(2) { height: 10px; animation-delay: 0.15s; }
-    .music-bars span:nth-child(3) { height: 7px;  animation-delay: 0.3s; }
-    .music-bars span:nth-child(4) { height: 12px; animation-delay: 0.1s; }
+    #musicBtn.playing .music-bars span { animation: musicBar 0.75s ease-in-out infinite alternate; }
+    #musicBtn.playing .music-bars span:nth-child(1) { height: 4px;  animation-delay: 0s;     }
+    #musicBtn.playing .music-bars span:nth-child(2) { height: 11px; animation-delay: 0.18s;  }
+    #musicBtn.playing .music-bars span:nth-child(3) { height: 7px;  animation-delay: 0.32s;  }
+    #musicBtn.playing .music-bars span:nth-child(4) { height: 12px; animation-delay: 0.08s;  }
+
+    #musicBtn:not(.playing) .music-bars span { height: 4px !important; }
 
     @keyframes musicBar {
-      from { transform: scaleY(0.3); }
+      from { transform: scaleY(0.25); }
       to   { transform: scaleY(1); }
     }
 
-    /* ── Content reveal animation ── */
-    .slide.active .slide__number,
-    .slide.active .slide__title,
-    .slide.active .slide__divider,
-    .slide.active .slide__phrase,
-    .slide.active .slide__nav {
-      animation: revealUp 0.8s ease both;
+    /* ═══════════════════════════════════
+       CONTENT REVEAL ANIMATIONS
+    ═══════════════════════════════════ */
+    .slide__counter,
+    .slide__ornament,
+    .slide__title,
+    .slide__rule,
+    .slide__phrase,
+    .slide__nav {
+      opacity: 0;
+      transform: translateY(14px);
     }
 
-    .slide.active .slide__number   { animation-delay: 0.2s; }
-    .slide.active .slide__title    { animation-delay: 0.35s; }
-    .slide.active .slide__divider  { animation-delay: 0.5s; }
-    .slide.active .slide__phrase   { animation-delay: 0.6s; }
-    .slide.active .slide__nav      { animation-delay: 0.75s; }
+    .slide.active .slide__counter { animation: up 0.7s var(--ease) 0.25s forwards; }
+    .slide.active .slide__ornament { animation: up 0.7s var(--ease) 0.35s forwards; }
+    .slide.active .slide__title   { animation: up 0.8s var(--ease) 0.45s forwards; }
+    .slide.active .slide__rule    { animation: up 0.7s var(--ease) 0.6s  forwards; }
+    .slide.active .slide__phrase  { animation: up 0.7s var(--ease) 0.7s  forwards; }
+    .slide.active .slide__nav     { animation: up 0.7s var(--ease) 0.85s forwards; }
 
-    @keyframes revealUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
+    @keyframes up {
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    /* ── Responsive ── */
-    @media (max-width: 480px) {
+    /* Panel entrance */
+    .slide .slide__panel { opacity: 0; transform: scale(0.97); transition: none; }
+    .slide.active .slide__panel {
+      animation: panelIn 0.8s var(--ease) 0.1s forwards;
+    }
+
+    @keyframes panelIn {
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* ═══════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════ */
+    @media (max-width: 520px) {
+      .slide__panel { padding: 2.5rem 1.75rem; }
       .slide__nav { flex-direction: column-reverse; width: 100%; }
       .btn { width: 100%; text-align: center; }
+    }
+
+    @media (max-height: 600px) {
+      .slide__panel { padding: 2rem 2.5rem; gap: 0; }
+      .slide__phrase { margin-bottom: 1.5rem; }
     }
   </style>
 </head>
 <body>
 
+  <!-- Top progress bar -->
+  <div id="topBar"></div>
+
+  <!-- Slideshow -->
   <div id="slideshow"></div>
 
-  <!-- Progress dots -->
-  <div class="progress" id="progress"></div>
+  <!-- Dots -->
+  <div id="progress"></div>
 
-  <!-- Music indicator -->
-  <div class="music-indicator" id="musicIndicator">
+  <!-- Music toggle button -->
+  <button id="musicBtn" aria-label="Música">
     <div class="music-bars">
       <span></span><span></span><span></span><span></span>
     </div>
-    tocando
-  </div>
+    <span id="musicLabel">música</span>
+  </button>
 
-  <!-- Audio elements -->
+  <!-- Audio -->
   <audio id="music1" loop>
-    <!-- Substitua pelo caminho da música 1 -->
     <!-- <source src="../audio/musica1.mp3" type="audio/mpeg" /> -->
   </audio>
   <audio id="music2" loop>
-    <!-- Substitua pelo caminho da música 2 -->
     <!-- <source src="../audio/musica2.mp3" type="audio/mpeg" /> -->
   </audio>
 
   <script>
     // ─────────────────────────────────────────────
-    //  SLIDES DATA — edite aqui o conteúdo
+    //  DATA
     // ─────────────────────────────────────────────
     const slides = [
       {
-        title:  "Minha princesa",
-        phrase: "Você é a razão do meu viver. Cada presente tem uma intenção. Por isso, siga um passo de cada vez.",
-        // Substitua pela URL ou caminho da sua foto:
-        bg:     "https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?w=1600&q=80",
+        title:    "Minha princesa",
+        phrase:   "Você é a razão do meu viver. Cada presente tem uma intenção. Por isso, siga um passo de cada vez.",
+        bg:       "https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?w=1600&q=80",
         btnLabel: "Começar",
-        music:  null,
+        music:    null,
       },
       {
-        title:  "Primeiro passo",
-        phrase: "Abra a tampa e volte aqui.",
-        bg:     "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1600&q=80",
+        title:    "Primeiro passo",
+        phrase:   "Abra a tampa e volte aqui.",
+        bg:       "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1600&q=80",
         btnLabel: "Próximo",
-        music:  null,
+        music:    null,
       },
       {
-        title:  "Vestir e Usar",
-        phrase: "Coloque, sinta e use com todo o amor que foi escolhido para você.",
-        bg:     "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1600&q=80",
+        title:    "Vestir e Usar",
+        phrase:   "Coloque, sinta e use com todo o amor que foi escolhido para você.",
+        bg:       "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1600&q=80",
         btnLabel: "Próximo",
-        music:  "music2",
+        music:    "music2",
       },
       {
-        title:  "Ler",
-        phrase: "Cada palavra foi escrita pensando em você.",
-        bg:     "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=1600&q=80",
+        title:    "Ler",
+        phrase:   "Cada palavra foi escrita pensando em você.",
+        bg:       "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=1600&q=80",
         btnLabel: "Próximo",
-        music:  "music2",
+        music:    "music2",
       },
       {
-        title:  "Escrever",
-        phrase: "Deixe seus pensamentos fluírem. Este espaço é só seu.",
-        bg:     "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=1600&q=80",
+        title:    "Escrever",
+        phrase:   "Deixe seus pensamentos fluírem. Este espaço é só seu.",
+        bg:       "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=1600&q=80",
         btnLabel: "Próximo",
-        music:  "music1",
+        music:    "music1",
       },
       {
-        title:  "Ser Usada",
-        phrase: "Este presente foi feito para estar com você todos os dias.",
-        bg:     "https://images.unsplash.com/photo-1513185158878-8d8c2a2a3da3?w=1600&q=80",
+        title:    "Ser Usada",
+        phrase:   "Este presente foi feito para estar com você todos os dias.",
+        bg:       "https://images.unsplash.com/photo-1513185158878-8d8c2a2a3da3?w=1600&q=80",
         btnLabel: "Próximo",
-        music:  "music1",
+        music:    "music1",
       },
       {
-        title:  "Relaxar",
-        phrase: "Você merece parar, respirar e simplesmente ser.",
-        bg:     "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1600&q=80",
+        title:    "Relaxar",
+        phrase:   "Você merece parar, respirar e simplesmente ser.",
+        bg:       "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1600&q=80",
         btnLabel: "Próximo",
-        music:  "music1",
+        music:    "music1",
       },
       {
-        title:  "Organizar & Executar",
-        phrase: "Com tudo no lugar, seus sonhos ficam mais perto.",
-        bg:     "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=1600&q=80",
+        title:    "Organizar & Executar",
+        phrase:   "Com tudo no lugar, seus sonhos ficam mais perto.",
+        bg:       "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=1600&q=80",
         btnLabel: "Próximo",
-        music:  "music1",
+        music:    "music1",
       },
       {
-        title:  "Com amor",
-        phrase: "O cartão está na tampa. Ele diz tudo o que o coração não coube em palavras.",
-        bg:     "https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?w=1600&q=80",
-        btnLabel: null, // último slide — sem botão próximo
-        music:  null,
+        title:    "Com amor",
+        phrase:   "O cartão está na tampa. Ele diz tudo o que o coração não coube em palavras.",
+        bg:       "https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?w=1600&q=80",
+        btnLabel: null,
+        music:    null,
       },
     ];
 
@@ -374,11 +560,15 @@
     //  STATE
     // ─────────────────────────────────────────────
     let current = 0;
+    let muted   = false;
+
     const audios = {
       music1: document.getElementById('music1'),
       music2: document.getElementById('music2'),
     };
-    const musicIndicator = document.getElementById('musicIndicator');
+    const musicBtn   = document.getElementById('musicBtn');
+    const musicLabel = document.getElementById('musicLabel');
+    const topBar     = document.getElementById('topBar');
 
     // ─────────────────────────────────────────────
     //  BUILD DOM
@@ -387,10 +577,9 @@
     const progressEl = document.getElementById('progress');
 
     slides.forEach((s, i) => {
-      // Slide
+      // Slide wrapper
       const el = document.createElement('div');
       el.className = 'slide' + (i === 0 ? ' active' : '');
-      el.dataset.index = i;
 
       // Background
       const bg = document.createElement('div');
@@ -398,25 +587,76 @@
       bg.style.backgroundImage = `url('${s.bg}')`;
       el.appendChild(bg);
 
-      // Content
-      const content = document.createElement('div');
-      content.className = 'slide__content';
+      // Bokeh particles
+      const bokeh = document.createElement('div');
+      bokeh.className = 'bokeh';
+      for (let p = 0; p < 8; p++) {
+        const dot = document.createElement('div');
+        dot.className = 'bokeh__dot';
+        const size = 6 + Math.random() * 18;
+        dot.style.cssText = `
+          width:${size}px; height:${size}px;
+          left:${Math.random()*100}%;
+          bottom:${-10 + Math.random()*15}%;
+          animation-duration:${12+Math.random()*14}s;
+          animation-delay:${Math.random()*10}s;
+          opacity:0;
+        `;
+        bokeh.appendChild(dot);
+      }
+      el.appendChild(bokeh);
 
-      content.innerHTML = `
-        <span class="slide__number">${String(i + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}</span>
-        <h1 class="slide__title">${s.title}</h1>
-        <div class="slide__divider"></div>
-        ${s.phrase ? `<p class="slide__phrase">${s.phrase}</p>` : ''}
-      `;
+      // Panel
+      const panel = document.createElement('div');
+      panel.className = 'slide__panel';
 
-      // Navigation
+      // Extra corners
+      ['corner-tr','corner-bl'].forEach(cls => {
+        const c = document.createElement('div');
+        c.className = cls;
+        panel.appendChild(c);
+      });
+
+      // Counter
+      const counter = document.createElement('div');
+      counter.className = 'slide__counter';
+      counter.textContent = `${String(i+1).padStart(2,'0')} — ${String(slides.length).padStart(2,'0')}`;
+      panel.appendChild(counter);
+
+      // Ornament
+      const orn = document.createElement('div');
+      orn.className = 'slide__ornament';
+      orn.innerHTML = '✦ ✦ ✦';
+      panel.appendChild(orn);
+
+      // Title
+      const title = document.createElement('h1');
+      title.className = 'slide__title';
+      title.textContent = s.title;
+      panel.appendChild(title);
+
+      // Rule
+      const rule = document.createElement('div');
+      rule.className = 'slide__rule';
+      rule.innerHTML = `<div class="slide__rule-line"></div><div class="slide__rule-diamond"></div><div class="slide__rule-line"></div>`;
+      panel.appendChild(rule);
+
+      // Phrase
+      if (s.phrase) {
+        const phrase = document.createElement('p');
+        phrase.className = 'slide__phrase';
+        phrase.textContent = s.phrase;
+        panel.appendChild(phrase);
+      }
+
+      // Nav
       const nav = document.createElement('div');
       nav.className = 'slide__nav';
 
       if (i > 0) {
         const back = document.createElement('button');
         back.className = 'btn btn-back';
-        back.textContent = 'Voltar';
+        back.textContent = '← Voltar';
         back.addEventListener('click', () => goTo(current - 1));
         nav.appendChild(back);
       }
@@ -424,20 +664,66 @@
       if (s.btnLabel) {
         const next = document.createElement('button');
         next.className = 'btn btn-next';
-        next.textContent = s.btnLabel;
+        next.textContent = s.btnLabel + ' →';
         next.addEventListener('click', () => goTo(current + 1));
         nav.appendChild(next);
       }
 
-      content.appendChild(nav);
-      el.appendChild(content);
+      panel.appendChild(nav);
+      el.appendChild(panel);
       slideshow.appendChild(el);
 
-      // Progress dot
+      // Dot
       const dot = document.createElement('div');
       dot.className = 'progress__dot' + (i === 0 ? ' active' : '');
+      dot.setAttribute('title', `Slide ${i+1}`);
       dot.addEventListener('click', () => goTo(i));
       progressEl.appendChild(dot);
+    });
+
+    // ─────────────────────────────────────────────
+    //  TOP BAR UPDATE
+    // ─────────────────────────────────────────────
+    function updateTopBar(index) {
+      const pct = slides.length <= 1 ? 100 : (index / (slides.length - 1)) * 100;
+      topBar.style.width = pct + '%';
+    }
+
+    // ─────────────────────────────────────────────
+    //  MUSIC
+    // ─────────────────────────────────────────────
+    function applyMusic(trackId) {
+      // Stop all
+      Object.values(audios).forEach(a => { a.pause(); a.currentTime = 0; });
+
+      if (trackId && audios[trackId]) {
+        musicBtn.classList.add('visible');
+        if (!muted && audios[trackId].src) {
+          audios[trackId].play().catch(() => {});
+          musicBtn.classList.add('playing');
+          musicLabel.textContent = 'música';
+        } else {
+          musicBtn.classList.remove('playing');
+          musicLabel.textContent = muted ? 'mudo' : 'música';
+        }
+      } else {
+        musicBtn.classList.remove('visible', 'playing');
+      }
+    }
+
+    musicBtn.addEventListener('click', () => {
+      const trackId = slides[current].music;
+      if (!trackId) return;
+      muted = !muted;
+      if (muted) {
+        audios[trackId] && audios[trackId].pause();
+        musicBtn.classList.remove('playing');
+        musicLabel.textContent = 'mudo';
+      } else {
+        audios[trackId] && audios[trackId].play().catch(() => {});
+        musicBtn.classList.add('playing');
+        musicLabel.textContent = 'música';
+      }
     });
 
     // ─────────────────────────────────────────────
@@ -446,52 +732,37 @@
     function goTo(index) {
       if (index < 0 || index >= slides.length) return;
 
-      const prevSlide = slides[current];
-      const nextSlide = slides[index];
-
-      // Stop previous music if changing track
-      if (prevSlide.music !== nextSlide.music) {
-        if (prevSlide.music && audios[prevSlide.music]) {
-          audios[prevSlide.music].pause();
-          audios[prevSlide.music].currentTime = 0;
-        }
-      }
-
-      // Update DOM
-      document.querySelectorAll('.slide').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.slide')[current].classList.remove('active');
       document.querySelectorAll('.progress__dot').forEach((d, i) => {
         d.classList.toggle('active', i === index);
       });
-      document.querySelectorAll('.slide')[index].classList.add('active');
 
       current = index;
 
-      // Play new music
-      if (nextSlide.music && audios[nextSlide.music]) {
-        const audio = audios[nextSlide.music];
-        if (audio.src && audio.paused) {
-          audio.play().catch(() => {}); // graceful fail if no src
-        }
-        musicIndicator.classList.add('visible');
-      } else {
-        musicIndicator.classList.remove('visible');
-      }
+      document.querySelectorAll('.slide')[current].classList.add('active');
+      updateTopBar(current);
+      applyMusic(slides[current].music);
     }
 
-    // Keyboard navigation
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight' || e.key === ' ') goTo(current + 1);
-      if (e.key === 'ArrowLeft') goTo(current - 1);
+    // Init top bar
+    updateTopBar(0);
+
+    // Keyboard
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+      if (e.key === 'ArrowLeft')                   { e.preventDefault(); goTo(current - 1); }
     });
 
-    // Touch/swipe support
-    let touchStartX = 0;
-    document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
-    document.addEventListener('touchend', (e) => {
-      const dx = e.changedTouches[0].clientX - touchStartX;
-      if (Math.abs(dx) > 50) goTo(dx < 0 ? current + 1 : current - 1);
-    });
+    // Swipe
+    let tx = 0, ty = 0;
+    document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+    document.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - tx;
+      const dy = e.changedTouches[0].clientY - ty;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 45) {
+        goTo(dx < 0 ? current + 1 : current - 1);
+      }
+    }, { passive: true });
   </script>
-
 </body>
 </html>
