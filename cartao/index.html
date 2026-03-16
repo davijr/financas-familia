@@ -732,18 +732,59 @@
     }
 
     // ─────────────────────────────────────────────────
-    //  MUSIC
+    //  MUSIC — fade in / fade out
     // ─────────────────────────────────────────────────
-    function applyMusic(track) {
-      Object.values(audios).forEach(a => { a.pause(); a.currentTime = 0; });
-      if (track && audios[track]) {
-        musicBtn.classList.add('visible');
-        if (!muted && audios[track].src) {
-          audios[track].play().catch(() => {});
-          musicBtn.classList.add('playing');
-        } else {
-          musicBtn.classList.remove('playing');
+    const FADE_IN_MS  = 1800;
+    const FADE_OUT_MS = 1200;
+    let fadeInterval  = null;
+
+    function clearFade() {
+      if (fadeInterval) { clearInterval(fadeInterval); fadeInterval = null; }
+    }
+
+    function fadeIn(audio) {
+      clearFade();
+      audio.volume = 0;
+      audio.play().catch(() => {});
+      const step   = 1 / (FADE_IN_MS / 50);
+      fadeInterval = setInterval(() => {
+        audio.volume = Math.min(1, audio.volume + step);
+        if (audio.volume >= 1) clearFade();
+      }, 50);
+    }
+
+    function fadeOut(audio, callback) {
+      clearFade();
+      if (audio.paused) { callback && callback(); return; }
+      const step   = audio.volume / (FADE_OUT_MS / 50);
+      fadeInterval = setInterval(() => {
+        audio.volume = Math.max(0, audio.volume - step);
+        if (audio.volume <= 0) {
+          clearFade();
+          audio.pause();
+          audio.currentTime = 0;
+          callback && callback();
         }
+      }, 50);
+    }
+
+    function applyMusic(track) {
+      const prev = Object.values(audios).find(a => !a.paused);
+      const next = track && audios[track];
+
+      if (prev && prev !== next) {
+        // fade out previous, then fade in next
+        fadeOut(prev, () => {
+          if (!muted && next && next.src) fadeIn(next);
+        });
+      } else if (!prev && next) {
+        if (!muted && next.src) fadeIn(next);
+      }
+
+      if (next) {
+        musicBtn.classList.add('visible');
+        if (!muted) musicBtn.classList.add('playing');
+        else musicBtn.classList.remove('playing');
       } else {
         musicBtn.classList.remove('visible','playing');
       }
@@ -753,11 +794,11 @@
       const track = slides[current].music;
       if (!track) return;
       muted = !muted;
+      const audio = audios[track];
       if (muted) {
-        audios[track]?.pause();
-        musicBtn.classList.remove('playing');
+        fadeOut(audio, () => musicBtn.classList.remove('playing'));
       } else {
-        audios[track]?.play().catch(() => {});
+        fadeIn(audio);
         musicBtn.classList.add('playing');
       }
     });
