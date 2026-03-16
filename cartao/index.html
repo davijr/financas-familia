@@ -842,6 +842,20 @@
     const firstVid = document.querySelector('.slide.active video');
     if (firstVid) firstVid.play().catch(() => {});
 
+    // Autoplay music on first user interaction (browser policy requires it)
+    let musicStarted = false;
+    function startMusicOnce() {
+      if (musicStarted) return;
+      musicStarted = true;
+      const track = slides[current].music;
+      if (track && !muted) {
+        fadeIn(audios[track]);
+        musicBtn.classList.add('playing');
+      }
+    }
+    document.addEventListener('click',      startMusicOnce, { once: true });
+    document.addEventListener('touchstart', startMusicOnce, { once: true, passive: true });
+
     // Keyboard
     document.addEventListener('keydown', e => {
       if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current+1); }
