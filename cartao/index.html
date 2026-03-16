@@ -17,13 +17,13 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --cream:     #f8eedd;
-      --gold:      #c99b3f;
-      --gold-l:    #e6bf72;
-      --dark:      #0a0705;
-      --ease:      cubic-bezier(0.42, 0, 0.18, 1);
-      --font-s:    'Playfair Display', Georgia, serif;
-      --font-b:    'Josefin Sans', sans-serif;
+      --cream:   #f8eedd;
+      --gold:    #c99b3f;
+      --gold-l:  #e6bf72;
+      --dark:    #0a0705;
+      --ease:    cubic-bezier(0.42, 0, 0.18, 1);
+      --font-s:  'Playfair Display', Georgia, serif;
+      --font-b:  'Josefin Sans', sans-serif;
     }
 
     html, body {
@@ -40,36 +40,35 @@
     #topBar {
       position: fixed;
       top: 0; left: 0; right: 0;
-      height: 2px;
       z-index: 200;
       display: flex;
       gap: 3px;
-      padding: env(safe-area-inset-top, 0) 12px 0;
-      align-items: center;
-      height: calc(6px + env(safe-area-inset-top, 0));
+      padding: env(safe-area-inset-top, 0) 10px 0;
+      height: calc(8px + env(safe-area-inset-top, 0));
+      align-items: flex-end;
+      padding-bottom: 4px;
     }
 
     .bar-segment {
       flex: 1;
       height: 2px;
-      background: rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.22);
       border-radius: 2px;
       overflow: hidden;
-      position: relative;
     }
 
     .bar-segment .bar-fill {
-      position: absolute;
-      top: 0; left: 0;
       height: 100%;
       width: 0%;
       background: linear-gradient(90deg, var(--gold), var(--gold-l));
       border-radius: 2px;
-      transition: width 0.5s var(--ease);
     }
 
-    .bar-segment.done .bar-fill  { width: 100%; }
-    .bar-segment.active .bar-fill { width: 100%; transition: width 8s linear; }
+    .bar-segment.done .bar-fill  { width: 100%; transition: none; }
+    .bar-segment.active .bar-fill {
+      width: 100%;
+      transition: width 8s linear;
+    }
 
     /* ═══════════════════════
        SLIDESHOW
@@ -84,7 +83,7 @@
       inset: 0;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.65s var(--ease);
+      transition: opacity 0.7s var(--ease);
     }
 
     .slide.active {
@@ -92,43 +91,76 @@
       pointer-events: all;
     }
 
-    /* ── Photo layer ── */
+    /* ── Video background (slide 1) ── */
+    .slide__video {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .slide__video video {
+      position: absolute;
+      top: 50%; left: 50%;
+      min-width: 100%; min-height: 100%;
+      width: auto; height: auto;
+      transform: translate(-50%, -50%);
+      object-fit: cover;
+    }
+
+    /* ── Photo layer(s) ── */
     .slide__photo {
       position: absolute;
       inset: 0;
       background-size: cover;
-      background-position: center top;
+      background-position: center;
       will-change: transform;
     }
 
-    /* Ken Burns variants — assigned per slide */
-    .kb-zoom-in    { animation: kbZoomIn  9s ease forwards; }
-    .kb-zoom-out   { animation: kbZoomOut 9s ease forwards; }
-    .kb-pan-right  { animation: kbPanR    9s ease forwards; }
-    .kb-pan-left   { animation: kbPanL    9s ease forwards; }
-    .kb-diagonal   { animation: kbDiag    9s ease forwards; }
+    /* Ken Burns variants */
+    .kb-zoom-in   { animation: kbZoomIn   9s ease forwards; }
+    .kb-zoom-out  { animation: kbZoomOut  9s ease forwards; }
+    .kb-pan-right { animation: kbPanR     9s ease forwards; }
+    .kb-pan-left  { animation: kbPanL     9s ease forwards; }
+    .kb-diagonal  { animation: kbDiag     9s ease forwards; }
 
-    @keyframes kbZoomIn  { from { transform: scale(1.08) translate(0,0);    } to { transform: scale(1)    translate(0,0);    } }
-    @keyframes kbZoomOut { from { transform: scale(1)    translate(0,0);    } to { transform: scale(1.07) translate(0,0);    } }
-    @keyframes kbPanR    { from { transform: scale(1.06) translate(-2%,0);  } to { transform: scale(1.02) translate(2%,0);   } }
-    @keyframes kbPanL    { from { transform: scale(1.06) translate(2%,0);   } to { transform: scale(1.02) translate(-2%,0);  } }
-    @keyframes kbDiag    { from { transform: scale(1.07) translate(-1%,1%); } to { transform: scale(1.01) translate(1%,-1%); } }
+    @keyframes kbZoomIn   { from{transform:scale(1.08)translate(0,0)}  to{transform:scale(1)translate(0,0)} }
+    @keyframes kbZoomOut  { from{transform:scale(1)translate(0,0)}     to{transform:scale(1.07)translate(0,0)} }
+    @keyframes kbPanR     { from{transform:scale(1.06)translate(-2%,0)}to{transform:scale(1.02)translate(2%,0)} }
+    @keyframes kbPanL     { from{transform:scale(1.06)translate(2%,0)} to{transform:scale(1.02)translate(-2%,0)} }
+    @keyframes kbDiag     { from{transform:scale(1.07)translate(-1%,1%)}to{transform:scale(1.01)translate(1%,-1%)} }
 
-    /* ── Color grading overlay ── */
+    /* ── Second photo crossfade ── */
+    .slide__photo-b {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      opacity: 0;
+      animation: crossfadeIn 2.5s ease 4.5s forwards;
+    }
+
+    @keyframes crossfadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    /* ── Color grade ── */
     .slide__grade {
       position: absolute;
       inset: 0;
       mix-blend-mode: multiply;
-      opacity: 0.45;
+      opacity: 0.4;
+      pointer-events: none;
     }
 
     /* ── Vignette ── */
     .slide__vignette {
       position: absolute;
       inset: 0;
+      pointer-events: none;
       background:
-        radial-gradient(ellipse 90% 75% at 50% 38%, transparent 25%, rgba(5,2,0,0.68) 100%),
-        linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, transparent 30%, transparent 50%, rgba(0,0,0,0.75) 100%);
+        radial-gradient(ellipse 90% 75% at 50% 38%, transparent 20%, rgba(4,2,0,0.65) 100%),
+        linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, transparent 25%, transparent 48%, rgba(0,0,0,0.80) 100%);
     }
 
     /* ── Bokeh ── */
@@ -142,108 +174,101 @@
     .bokeh__dot {
       position: absolute;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(230,191,114,0.6) 0%, transparent 65%);
+      background: radial-gradient(circle, rgba(230,191,114,0.55) 0%, transparent 65%);
       filter: blur(3px);
       animation: floatUp linear infinite;
       opacity: 0;
     }
 
     @keyframes floatUp {
-      0%   { transform: translateY(0)    scale(1);   opacity: 0; }
-      8%   { opacity: 0.8; }
-      85%  { opacity: 0.5; }
-      100% { transform: translateY(-105vh) scale(1.4); opacity: 0; }
+      0%   { transform:translateY(0) scale(1);    opacity:0; }
+      8%   { opacity:0.7; }
+      85%  { opacity:0.45; }
+      100% { transform:translateY(-108vh) scale(1.4); opacity:0; }
     }
 
     /* ═══════════════════════
-       STORY-STYLE CONTENT
-       Panel docked at bottom
+       STORY PANEL (bottom)
     ═══════════════════════ */
     .slide__story {
       position: absolute;
-      bottom: 0;
-      left: 0; right: 0;
-      padding: 2rem 1.75rem;
+      bottom: 0; left: 0; right: 0;
+      padding: 2.5rem 1.75rem;
       padding-bottom: max(2rem, env(safe-area-inset-bottom, 2rem));
       background: linear-gradient(to top,
-        rgba(6,3,1,0.88) 0%,
-        rgba(6,3,1,0.72) 40%,
-        rgba(6,3,1,0.3)  75%,
-        transparent 100%
+        rgba(5,2,0,0.9)  0%,
+        rgba(5,2,0,0.75) 38%,
+        rgba(5,2,0,0.28) 72%,
+        transparent      100%
       );
-      backdrop-filter: blur(0px);
       display: flex;
       flex-direction: column;
-      gap: 0.6rem;
+      gap: 0.55rem;
     }
 
-    /* Subtle left accent bar */
+    /* Left accent line */
     .slide__story::before {
       content: '';
       position: absolute;
-      left: 0; top: 30%; bottom: 0;
+      left: 0; top: 32%; bottom: 0;
       width: 2px;
-      background: linear-gradient(to bottom, transparent, var(--gold), transparent);
-      opacity: 0.5;
+      background: linear-gradient(to bottom, transparent, rgba(201,155,63,0.55), transparent);
     }
 
     .slide__eyebrow {
       font-family: var(--font-b);
-      font-size: 0.58rem;
+      font-size: 0.57rem;
       font-weight: 200;
-      letter-spacing: 0.3em;
+      letter-spacing: 0.32em;
       text-transform: uppercase;
-      color: var(--gold);
-      opacity: 0.85;
+      color: rgba(201,155,63,0.82);
     }
 
     .slide__title {
       font-family: var(--font-s);
-      font-size: clamp(1.9rem, 7.5vw, 2.8rem);
+      font-size: clamp(1.85rem, 7.5vw, 2.75rem);
       font-weight: 700;
       font-style: italic;
       line-height: 1.1;
       color: var(--cream);
-      text-shadow: 0 2px 20px rgba(0,0,0,0.5);
-      letter-spacing: -0.01em;
+      text-shadow: 0 2px 24px rgba(0,0,0,0.55);
     }
 
     .slide__rule {
       display: flex;
       align-items: center;
-      gap: 0.55rem;
+      gap: 0.5rem;
     }
 
     .slide__rule-dot {
       width: 3px; height: 3px;
       border-radius: 50%;
       background: var(--gold);
-      opacity: 0.7;
+      opacity: 0.65;
+      flex-shrink: 0;
     }
 
     .slide__rule-line {
       height: 1px;
       width: 2rem;
-      background: linear-gradient(90deg, var(--gold), transparent);
-      opacity: 0.6;
+      background: linear-gradient(90deg, rgba(201,155,63,0.6), transparent);
     }
 
     .slide__phrase {
       font-family: var(--font-s);
-      font-size: clamp(0.9rem, 3.8vw, 1.05rem);
+      font-size: clamp(0.88rem, 3.7vw, 1.03rem);
       font-weight: 400;
-      line-height: 1.7;
-      color: rgba(248,238,221,0.8);
-      text-shadow: 0 1px 10px rgba(0,0,0,0.6);
+      line-height: 1.72;
+      color: rgba(248,238,221,0.78);
+      text-shadow: 0 1px 12px rgba(0,0,0,0.6);
       max-width: 38ch;
     }
 
-    /* ── Nav ── */
     .slide__nav {
       display: flex;
-      gap: 0.75rem;
+      gap: 0.7rem;
       align-items: center;
-      margin-top: 0.6rem;
+      margin-top: 0.5rem;
       flex-wrap: wrap;
     }
 
@@ -259,55 +284,52 @@
       padding: 0.9rem 1.75rem;
       transition: all 0.25s ease;
       -webkit-tap-highlight-color: transparent;
-      min-height: 44px; /* accessibility touch target */
+      min-height: 44px;
     }
 
     .btn-next {
       background: var(--gold);
       color: var(--dark);
-      position: relative;
-      overflow: hidden;
       flex: 1;
       max-width: 200px;
+      position: relative;
+      overflow: hidden;
     }
 
     .btn-next::after {
       content: '';
       position: absolute;
       top: 0; left: -100%;
-      width: 55%;
-      height: 100%;
+      width: 55%; height: 100%;
       background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
-      transition: left 0.55s ease;
+      transition: left 0.5s ease;
     }
 
-    .btn-next:hover::after,
-    .btn-next:active::after { left: 160%; }
-
     .btn-next:active { transform: scale(0.97); }
+    .btn-next:active::after,
+    .btn-next:hover::after  { left: 160%; }
 
     .btn-back {
       background: rgba(255,255,255,0.07);
-      color: rgba(248,238,221,0.6);
-      border: 1px solid rgba(255,255,255,0.14);
+      color: rgba(248,238,221,0.55);
+      border: 1px solid rgba(255,255,255,0.13);
       min-width: 80px;
     }
 
     .btn-back:active { opacity: 0.7; transform: scale(0.97); }
 
     /* ═══════════════════════
-       PROGRESS DOTS
+       SLIDE BADGE (top-right)
     ═══════════════════════ */
-    /* (replaced by top segments; keeping a counter badge) */
     #slideBadge {
       position: fixed;
-      top: max(1rem, calc(env(safe-area-inset-top, 0) + 0.6rem));
+      top: max(0.9rem, calc(env(safe-area-inset-top, 0) + 0.5rem));
       right: 1rem;
       font-family: var(--font-b);
-      font-size: 0.58rem;
+      font-size: 0.57rem;
       font-weight: 200;
       letter-spacing: 0.18em;
-      color: rgba(255,255,255,0.55);
+      color: rgba(255,255,255,0.5);
       z-index: 201;
     }
 
@@ -319,14 +341,13 @@
       bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
       right: 1rem;
       z-index: 100;
-      width: 40px;
-      height: 40px;
+      width: 40px; height: 40px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0,0,0,0.4);
-      border: 1px solid rgba(201,155,63,0.35);
+      background: rgba(0,0,0,0.38);
+      border: 1px solid rgba(201,155,63,0.32);
       backdrop-filter: blur(8px);
       cursor: pointer;
       opacity: 0;
@@ -356,12 +377,12 @@
       animation: mBar 0.75s ease-in-out infinite alternate;
     }
 
-    #musicBtn.playing .music-bars span:nth-child(1) { height: 4px;  animation-delay: 0s;    }
-    #musicBtn.playing .music-bars span:nth-child(2) { height: 10px; animation-delay: 0.2s;  }
-    #musicBtn.playing .music-bars span:nth-child(3) { height: 6px;  animation-delay: 0.35s; }
-    #musicBtn.playing .music-bars span:nth-child(4) { height: 11px; animation-delay: 0.1s;  }
+    #musicBtn.playing .music-bars span:nth-child(1) { height:4px;  animation-delay:0s;    }
+    #musicBtn.playing .music-bars span:nth-child(2) { height:10px; animation-delay:0.2s;  }
+    #musicBtn.playing .music-bars span:nth-child(3) { height:6px;  animation-delay:0.35s; }
+    #musicBtn.playing .music-bars span:nth-child(4) { height:11px; animation-delay:0.1s;  }
 
-    #musicBtn:not(.playing) .music-bars span { height: 4px !important; opacity: 0.4; }
+    #musicBtn:not(.playing) .music-bars span { height:4px !important; opacity:0.35; }
 
     @keyframes mBar {
       from { transform: scaleY(0.2); }
@@ -369,7 +390,7 @@
     }
 
     /* ═══════════════════════
-       CONTENT ANIMATIONS
+       REVEAL ANIMATIONS
     ═══════════════════════ */
     .slide__eyebrow,
     .slide__title,
@@ -380,37 +401,31 @@
       transform: translateY(12px);
     }
 
-    .slide.active .slide__eyebrow { animation: up 0.6s var(--ease) 0.3s  forwards; }
-    .slide.active .slide__title   { animation: up 0.7s var(--ease) 0.42s forwards; }
-    .slide.active .slide__rule    { animation: up 0.6s var(--ease) 0.55s forwards; }
-    .slide.active .slide__phrase  { animation: up 0.65s var(--ease) 0.62s forwards; }
-    .slide.active .slide__nav     { animation: up 0.6s var(--ease) 0.78s forwards; }
+    .slide.active .slide__eyebrow { animation: up 0.6s var(--ease) 0.28s  forwards; }
+    .slide.active .slide__title   { animation: up 0.7s var(--ease) 0.42s  forwards; }
+    .slide.active .slide__rule    { animation: up 0.6s var(--ease) 0.56s  forwards; }
+    .slide.active .slide__phrase  { animation: up 0.65s var(--ease) 0.63s forwards; }
+    .slide.active .slide__nav     { animation: up 0.6s var(--ease) 0.78s  forwards; }
 
-    @keyframes up {
-      to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes up { to { opacity:1; transform:translateY(0); } }
 
     /* ═══════════════════════
-       RESPONSIVE — LANDSCAPE
+       RESPONSIVE
     ═══════════════════════ */
     @media (orientation: landscape) and (max-height: 500px) {
-      .slide__story { padding: 1.25rem 2rem; gap: 0.4rem; }
-      .slide__title { font-size: 1.6rem; }
+      .slide__story { padding: 1.1rem 2rem; gap: 0.35rem; }
+      .slide__title { font-size: 1.5rem; }
       .slide__phrase { display: none; }
     }
 
-    /* Large screens — center the panel */
     @media (min-width: 700px) {
       .slide__story {
-        max-width: 520px;
-        margin: 0 auto;
+        max-width: 500px;
         left: 50%;
         right: auto;
         transform: translateX(-50%);
-        border-radius: 0;
         padding-bottom: 2.5rem;
       }
-
       .slide__story::before { display: none; }
     }
   </style>
@@ -420,6 +435,7 @@
   <div id="topBar"></div>
   <div id="slideBadge">01 / 09</div>
   <div id="slideshow"></div>
+
   <button id="musicBtn" aria-label="Música">
     <div class="music-bars">
       <span></span><span></span><span></span><span></span>
@@ -430,110 +446,123 @@
   <audio id="music2" loop><!-- <source src="../audio/musica2.mp3" type="audio/mpeg"> --></audio>
 
   <script>
-    // ─────────────────────────────────────────
+    // ─────────────────────────────────────────────────
     //  SLIDES DATA
-    //  kb: Ken Burns variant (zoom-in, zoom-out, pan-right, pan-left, diagonal)
-    //  grade: CSS color for the color grading overlay
-    // ─────────────────────────────────────────
+    //  bg:  string → single photo
+    //       [a, b]  → crossfade between a (4s) → b
+    //  video: path to mp4 (null = none)
+    //  kb:  Ken Burns variant class
+    //  grade: color overlay for cinematic grading
+    // ─────────────────────────────────────────────────
+    const IMG = 'image/';
+
     const slides = [
       {
         title:    "Minha princesa",
         phrase:   "Você é a razão do meu viver. Cada presente tem uma intenção. Por isso, siga um passo de cada vez.",
-        bg:       "https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?w=1400&q=85",
+        video:    IMG + "MOVIE.mp4",
+        bg:       IMG + "Screenshot_20260315_211713_Photos.jpg",
         btnLabel: "Começar",
         music:    null,
         kb:       "kb-zoom-in",
-        grade:    "rgba(180,100,60,0.3)",
+        grade:    "rgba(160,80,40,0.28)",
       },
       {
         title:    "Primeiro passo",
         phrase:   "Abra a tampa e volte aqui.",
-        bg:       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=1400&q=85",
+        bg:       [IMG + "IMG_20211009_150628.jpg",
+                   IMG + "IMG_20170422_214516591.jpg"],
         btnLabel: "Próximo",
         music:    null,
         kb:       "kb-pan-right",
-        grade:    "rgba(120,80,160,0.25)",
+        grade:    "rgba(100,70,140,0.22)",
       },
       {
         title:    "Vestir e Usar",
         phrase:   "Coloque, sinta e use com todo o amor que foi escolhido para você.",
-        bg:       "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1400&q=85",
+        bg:       [IMG + "IMG_20220927_162831.jpg",
+                   IMG + "IMG_20170226_133235035.jpg"],
         btnLabel: "Próximo",
         music:    "music2",
         kb:       "kb-zoom-out",
-        grade:    "rgba(200,140,60,0.2)",
+        grade:    "rgba(190,130,50,0.2)",
       },
       {
         title:    "Ler",
         phrase:   "Cada palavra foi escrita pensando em você.",
-        bg:       "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=1400&q=85",
+        bg:       [IMG + "IMG_20161231_231900656.jpg",
+                   IMG + "IMG_20211011_194500.jpg"],
         btnLabel: "Próximo",
         music:    "music2",
         kb:       "kb-pan-left",
-        grade:    "rgba(60,100,130,0.3)",
+        grade:    "rgba(50,90,120,0.28)",
       },
       {
         title:    "Escrever",
         phrase:   "Deixe seus pensamentos fluírem. Este espaço é só seu.",
-        bg:       "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=1400&q=85",
+        bg:       [IMG + "IMG_20220312_174438.jpg",
+                   IMG + "IMG_20220312_155046.jpg"],
         btnLabel: "Próximo",
         music:    "music1",
         kb:       "kb-diagonal",
-        grade:    "rgba(170,130,90,0.2)",
+        grade:    "rgba(160,120,80,0.2)",
       },
       {
         title:    "Ser Usada",
         phrase:   "Este presente foi feito para estar com você todos os dias.",
-        bg:       "https://images.unsplash.com/photo-1513185158878-8d8c2a2a3da3?w=1400&q=85",
+        bg:       [IMG + "IMG_20210103_175730.jpg",
+                   IMG + "20240131_180643.jpg"],
         btnLabel: "Próximo",
         music:    "music1",
         kb:       "kb-zoom-in",
-        grade:    "rgba(180,90,90,0.25)",
+        grade:    "rgba(170,80,80,0.22)",
       },
       {
         title:    "Relaxar",
         phrase:   "Você merece parar, respirar e simplesmente ser.",
-        bg:       "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1400&q=85",
+        bg:       [IMG + "IMG_20220928_132802.jpg",
+                   IMG + "IMG_20220927_134325.jpg"],
         btnLabel: "Próximo",
         music:    "music1",
         kb:       "kb-pan-right",
-        grade:    "rgba(60,120,110,0.3)",
+        grade:    "rgba(50,110,100,0.28)",
       },
       {
         title:    "Organizar & Executar",
         phrase:   "Com tudo no lugar, seus sonhos ficam mais perto.",
-        bg:       "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=1400&q=85",
+        bg:       IMG + "IMG_20170121_220459464_BURST000_COVER_TOP.jpg",
         btnLabel: "Próximo",
         music:    "music1",
         kb:       "kb-zoom-out",
-        grade:    "rgba(140,160,80,0.2)",
+        grade:    "rgba(130,150,70,0.2)",
       },
       {
-        title:    "Com amor",
+        title:    "Com amor ♡",
         phrase:   "O cartão está na tampa. Ele diz tudo o que o coração não coube em palavras.",
-        bg:       "https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?w=1400&q=85",
+        bg:       IMG + "Screenshot_20260315_211713_Photos.jpg",
         btnLabel: null,
         music:    null,
         kb:       "kb-zoom-in",
-        grade:    "rgba(180,100,60,0.3)",
+        grade:    "rgba(160,80,40,0.28)",
       },
     ];
 
-    // ─────────────────────────────────────────
+    // ─────────────────────────────────────────────────
     //  STATE
-    // ─────────────────────────────────────────
+    // ─────────────────────────────────────────────────
     let current = 0;
     let muted   = false;
-    const audios = { music1: document.getElementById('music1'), music2: document.getElementById('music2') };
-    const musicBtn  = document.getElementById('musicBtn');
+    const audios     = { music1: document.getElementById('music1'), music2: document.getElementById('music2') };
+    const musicBtn   = document.getElementById('musicBtn');
     const slideBadge = document.getElementById('slideBadge');
+    const topBarEl   = document.getElementById('topBar');
+    const slideshow  = document.getElementById('slideshow');
 
-    // ─────────────────────────────────────────
-    //  BUILD TOP BAR SEGMENTS
-    // ─────────────────────────────────────────
-    const topBarEl = document.getElementById('topBar');
-    slides.forEach((_, i) => {
-      const seg = document.createElement('div');
+    // ─────────────────────────────────────────────────
+    //  BUILD TOP BAR
+    // ─────────────────────────────────────────────────
+    slides.forEach(() => {
+      const seg  = document.createElement('div');
       seg.className = 'bar-segment';
       const fill = document.createElement('div');
       fill.className = 'bar-fill';
@@ -541,51 +570,75 @@
       topBarEl.appendChild(seg);
     });
 
-    // ─────────────────────────────────────────
+    // ─────────────────────────────────────────────────
     //  BUILD SLIDES
-    // ─────────────────────────────────────────
-    const slideshow = document.getElementById('slideshow');
-
+    // ─────────────────────────────────────────────────
     slides.forEach((s, i) => {
       const el = document.createElement('div');
       el.className = 'slide' + (i === 0 ? ' active' : '');
 
-      // Photo
-      const photo = document.createElement('div');
-      photo.className = `slide__photo ${s.kb}`;
-      photo.style.backgroundImage = `url('${s.bg}')`;
-      el.appendChild(photo);
+      // ── Video background (if provided) ──
+      if (s.video) {
+        const vWrap = document.createElement('div');
+        vWrap.className = 'slide__video';
+        const vid = document.createElement('video');
+        vid.src = s.video;
+        vid.autoplay = true;
+        vid.muted    = true;
+        vid.loop     = true;
+        vid.playsInline = true;
+        vid.setAttribute('playsinline', '');
+        vWrap.appendChild(vid);
+        el.appendChild(vWrap);
+      }
 
-      // Color grade
+      // ── Photo A (always present) ──
+      const bgA = Array.isArray(s.bg) ? s.bg[0] : s.bg;
+      const photoA = document.createElement('div');
+      photoA.className = `slide__photo ${s.kb}`;
+      // If there's a video, photo A is hidden initially (video plays first)
+      if (s.video) photoA.style.opacity = '0';
+      photoA.style.backgroundImage = `url('${bgA}')`;
+      el.appendChild(photoA);
+
+      // ── Photo B (crossfade, if 2 images) ──
+      if (Array.isArray(s.bg) && s.bg[1]) {
+        const photoB = document.createElement('div');
+        photoB.className = 'slide__photo slide__photo-b';
+        photoB.style.backgroundImage = `url('${s.bg[1]}')`;
+        el.appendChild(photoB);
+      }
+
+      // ── Color grade ──
       const grade = document.createElement('div');
       grade.className = 'slide__grade';
       grade.style.background = s.grade;
       el.appendChild(grade);
 
-      // Vignette
+      // ── Vignette ──
       const vig = document.createElement('div');
       vig.className = 'slide__vignette';
       el.appendChild(vig);
 
-      // Bokeh
+      // ── Bokeh ──
       const bokeh = document.createElement('div');
       bokeh.className = 'bokeh';
-      for (let p = 0; p < 6; p++) {
+      for (let p = 0; p < 5; p++) {
         const dot = document.createElement('div');
         dot.className = 'bokeh__dot';
-        const sz = 8 + Math.random() * 16;
+        const sz = 7 + Math.random() * 14;
         dot.style.cssText = `
           width:${sz}px;height:${sz}px;
           left:${Math.random()*100}%;
-          bottom:${Math.random()*20}%;
+          bottom:${Math.random()*18}%;
           animation-duration:${10+Math.random()*12}s;
-          animation-delay:${Math.random()*8}s;
+          animation-delay:${Math.random()*9}s;
         `;
         bokeh.appendChild(dot);
       }
       el.appendChild(bokeh);
 
-      // Story panel
+      // ── Story panel ──
       const story = document.createElement('div');
       story.className = 'slide__story';
 
@@ -599,7 +652,7 @@
 
       const rule = document.createElement('div');
       rule.className = 'slide__rule';
-      rule.innerHTML = `<div class="slide__rule-dot"></div><div class="slide__rule-line"></div>`;
+      rule.innerHTML = '<div class="slide__rule-dot"></div><div class="slide__rule-line"></div>';
 
       story.appendChild(eyebrow);
       story.appendChild(title);
@@ -636,48 +689,51 @@
       slideshow.appendChild(el);
     });
 
-    // ─────────────────────────────────────────
-    //  PARALLAX (gyroscope — mobile)
-    // ─────────────────────────────────────────
-    let gyroSupported = false;
-    if (window.DeviceOrientationEvent) {
-      window.addEventListener('deviceorientation', (e) => {
-        if (!gyroSupported && e.gamma !== null) gyroSupported = true;
-        if (!gyroSupported) return;
-        const tiltX = Math.max(-8, Math.min(8, e.gamma || 0));
-        const tiltY = Math.max(-4, Math.min(4, (e.beta  || 0) - 45));
-        const photo = document.querySelectorAll('.slide')[current]?.querySelector('.slide__photo');
-        if (photo) {
-          photo.style.transform = `translate(${tiltX * 0.4}px, ${tiltY * 0.3}px)`;
-        }
-      }, { passive: true });
-    }
+    // ─────────────────────────────────────────────────
+    //  GYROSCOPE PARALLAX
+    // ─────────────────────────────────────────────────
+    let gyroOk = false;
+    window.addEventListener('deviceorientation', (e) => {
+      if (!gyroOk && e.gamma !== null) gyroOk = true;
+      if (!gyroOk) return;
+      const tx = Math.max(-8, Math.min(8, e.gamma || 0));
+      const ty = Math.max(-4, Math.min(4, (e.beta || 0) - 45));
+      const photo = document.querySelectorAll('.slide')[current]?.querySelector('.slide__photo');
+      if (photo) photo.style.transform = `translate(${tx * 0.35}px, ${ty * 0.28}px)`;
+    }, { passive: true });
 
-    // ─────────────────────────────────────────
-    //  NAVIGATION
-    // ─────────────────────────────────────────
+    // ─────────────────────────────────────────────────
+    //  UI UPDATE
+    // ─────────────────────────────────────────────────
     function updateUI(index) {
-      // Badge
-      slideBadge.textContent = `${String(index+1).padStart(2,'0')} / ${String(slides.length).padStart(2,'0')}`;
+      slideBadge.textContent =
+        `${String(index+1).padStart(2,'0')} / ${String(slides.length).padStart(2,'0')}`;
 
-      // Top bar segments
       document.querySelectorAll('.bar-segment').forEach((seg, i) => {
-        seg.classList.remove('done','active');
-        if (i < index) seg.classList.add('done');
-        if (i === index) seg.classList.add('active');
-        // reset fill animation
         const fill = seg.querySelector('.bar-fill');
-        fill.style.transition = 'none';
-        fill.style.width = (i < index ? '100%' : '0%');
-        if (i === index) {
-          requestAnimationFrame(() => {
+        seg.classList.remove('done','active');
+
+        if (i < index) {
+          seg.classList.add('done');
+          fill.style.transition = 'none';
+          fill.style.width = '100%';
+        } else if (i === index) {
+          fill.style.transition = 'none';
+          fill.style.width = '0%';
+          requestAnimationFrame(() => requestAnimationFrame(() => {
             fill.style.transition = 'width 8s linear';
             fill.style.width = '100%';
-          });
+          }));
+        } else {
+          fill.style.transition = 'none';
+          fill.style.width = '0%';
         }
       });
     }
 
+    // ─────────────────────────────────────────────────
+    //  MUSIC
+    // ─────────────────────────────────────────────────
     function applyMusic(track) {
       Object.values(audios).forEach(a => { a.pause(); a.currentTime = 0; });
       if (track && audios[track]) {
@@ -693,28 +749,6 @@
       }
     }
 
-    function goTo(index) {
-      if (index < 0 || index >= slides.length) return;
-
-      // Restart Ken Burns on entering slide
-      const nextSlideEl = document.querySelectorAll('.slide')[index];
-      const nextPhoto = nextSlideEl.querySelector('.slide__photo');
-      const kb = slides[index].kb;
-      nextPhoto.classList.remove('kb-zoom-in','kb-zoom-out','kb-pan-right','kb-pan-left','kb-diagonal');
-      void nextPhoto.offsetWidth; // reflow
-      nextPhoto.classList.add(kb);
-
-      document.querySelectorAll('.slide')[current].classList.remove('active');
-      current = index;
-      document.querySelectorAll('.slide')[current].classList.add('active');
-      updateUI(current);
-      applyMusic(slides[current].music);
-    }
-
-    // Init
-    updateUI(0);
-
-    // Music mute toggle
     musicBtn.addEventListener('click', () => {
       const track = slides[current].music;
       if (!track) return;
@@ -728,6 +762,45 @@
       }
     });
 
+    // ─────────────────────────────────────────────────
+    //  NAVIGATE
+    // ─────────────────────────────────────────────────
+    function goTo(index) {
+      if (index < 0 || index >= slides.length) return;
+
+      // Restart Ken Burns on target slide
+      const targetEl = document.querySelectorAll('.slide')[index];
+      const photo    = targetEl.querySelector('.slide__photo');
+      const kb       = slides[index].kb;
+      photo.classList.remove('kb-zoom-in','kb-zoom-out','kb-pan-right','kb-pan-left','kb-diagonal');
+      void photo.offsetWidth;
+      photo.classList.add(kb);
+
+      // Restart crossfade photo-b
+      const photoB = targetEl.querySelector('.slide__photo-b');
+      if (photoB) {
+        photoB.style.animation = 'none';
+        void photoB.offsetWidth;
+        photoB.style.animation = '';
+      }
+
+      // Play video if present
+      const vid = targetEl.querySelector('video');
+      if (vid) vid.play().catch(() => {});
+
+      document.querySelectorAll('.slide')[current].classList.remove('active');
+      current = index;
+      document.querySelectorAll('.slide')[current].classList.add('active');
+      updateUI(current);
+      applyMusic(slides[current].music);
+    }
+
+    // Init
+    updateUI(0);
+    // Start video on slide 1 if present
+    const firstVid = document.querySelector('.slide.active video');
+    if (firstVid) firstVid.play().catch(() => {});
+
     // Keyboard
     document.addEventListener('keydown', e => {
       if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current+1); }
@@ -735,15 +808,12 @@
     });
 
     // Touch swipe
-    let tx = 0, ty = 0, dragging = false;
+    let tx = 0, ty = 0;
     document.addEventListener('touchstart', e => {
       tx = e.touches[0].clientX;
       ty = e.touches[0].clientY;
-      dragging = true;
     }, { passive: true });
     document.addEventListener('touchend', e => {
-      if (!dragging) return;
-      dragging = false;
       const dx = e.changedTouches[0].clientX - tx;
       const dy = e.changedTouches[0].clientY - ty;
       if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 42) {
