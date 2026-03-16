@@ -457,11 +457,13 @@
     const IMG = 'image/';
 
     const slides = [
+      // bg pode ser objeto { src, pos, rotate? } ou array de objetos
+      // pos = background-position  |  rotate = graus CSS (90, -90, 180)
       {
         title:    "Minha princesa",
         phrase:   "Você é a razão do meu viver. Cada presente tem uma intenção. Por isso, siga um passo de cada vez.",
         video:    IMG + "MOVIE.mp4",
-        bg:       IMG + "Screenshot_20260315_211713_Photos.jpg",
+        bg:       { src: IMG + "Screenshot_20260315_211713_Photos.jpg", pos: 'center 22%' },
         btnLabel: "Começar",
         music:    null,
         kb:       "kb-zoom-in",
@@ -470,8 +472,10 @@
       {
         title:    "Primeiro passo",
         phrase:   "Abra a tampa e volte aqui.",
-        bg:       [IMG + "IMG_20211009_150628.jpg",
-                   IMG + "IMG_20170422_214516591.jpg"],
+        bg: [
+          { src: IMG + "IMG_20211009_150628.jpg",    pos: 'center 38%' },
+          { src: IMG + "IMG_20170422_214516591.jpg", pos: '38% 28%'    },
+        ],
         btnLabel: "Próximo",
         music:    null,
         kb:       "kb-pan-right",
@@ -480,8 +484,10 @@
       {
         title:    "Vestir e Usar",
         phrase:   "Coloque, sinta e use com todo o amor que foi escolhido para você.",
-        bg:       [IMG + "IMG_20220927_162831.jpg",
-                   IMG + "IMG_20170226_133235035.jpg"],
+        bg: [
+          { src: IMG + "IMG_20220927_162831.jpg",    pos: '42% 22%'   },
+          { src: IMG + "IMG_20170226_133235035.jpg", pos: 'center 18%' },
+        ],
         btnLabel: "Próximo",
         music:    "music2",
         kb:       "kb-zoom-out",
@@ -490,8 +496,10 @@
       {
         title:    "Ler",
         phrase:   "Cada palavra foi escrita pensando em você.",
-        bg:       [IMG + "IMG_20161231_231900656.jpg",
-                   IMG + "IMG_20211011_194500.jpg"],
+        bg: [
+          { src: IMG + "IMG_20161231_231900656.jpg", pos: 'center 22%' },
+          { src: IMG + "IMG_20211011_194500.jpg",    rotate: 90        }, // foto deitada → corrigida
+        ],
         btnLabel: "Próximo",
         music:    "music2",
         kb:       "kb-pan-left",
@@ -500,8 +508,10 @@
       {
         title:    "Escrever",
         phrase:   "Deixe seus pensamentos fluírem. Este espaço é só seu.",
-        bg:       [IMG + "IMG_20220312_174438.jpg",
-                   IMG + "IMG_20220312_155046.jpg"],
+        bg: [
+          { src: IMG + "IMG_20220312_174438.jpg",  pos: '42% 20%'   },
+          { src: IMG + "IMG_20220312_155046.jpg",  pos: 'center 42%' },
+        ],
         btnLabel: "Próximo",
         music:    "music1",
         kb:       "kb-diagonal",
@@ -510,8 +520,10 @@
       {
         title:    "Ser Usada",
         phrase:   "Este presente foi feito para estar com você todos os dias.",
-        bg:       [IMG + "IMG_20210103_175730.jpg",
-                   IMG + "20240131_180643.jpg"],
+        bg: [
+          { src: IMG + "IMG_20210103_175730.jpg", pos: 'center 30%' },
+          { src: IMG + "20240131_180643.jpg",     pos: 'center 28%' },
+        ],
         btnLabel: "Próximo",
         music:    "music1",
         kb:       "kb-zoom-in",
@@ -520,8 +532,10 @@
       {
         title:    "Relaxar",
         phrase:   "Você merece parar, respirar e simplesmente ser.",
-        bg:       [IMG + "IMG_20220928_132802.jpg",
-                   IMG + "IMG_20220927_134325.jpg"],
+        bg: [
+          { src: IMG + "IMG_20220928_132802.jpg",  rotate: 180  }, // foto de cabeça pra baixo → corrigida
+          { src: IMG + "IMG_20220927_134325.jpg",  rotate: -90  }, // foto deitada → corrigida
+        ],
         btnLabel: "Próximo",
         music:    "music1",
         kb:       "kb-pan-right",
@@ -530,7 +544,7 @@
       {
         title:    "Organizar & Executar",
         phrase:   "Com tudo no lugar, seus sonhos ficam mais perto.",
-        bg:       IMG + "IMG_20170121_220459464_BURST000_COVER_TOP.jpg",
+        bg:       { src: IMG + "IMG_20170121_220459464_BURST000_COVER_TOP.jpg", pos: 'center 30%' },
         btnLabel: "Próximo",
         music:    "music1",
         kb:       "kb-zoom-out",
@@ -539,7 +553,7 @@
       {
         title:    "Com amor ♡",
         phrase:   "O cartão está na tampa. Ele diz tudo o que o coração não coube em palavras.",
-        bg:       IMG + "Screenshot_20260315_211713_Photos.jpg",
+        bg:       { src: IMG + "Screenshot_20260315_211713_Photos.jpg", pos: 'center 22%' },
         btnLabel: null,
         music:    null,
         kb:       "kb-zoom-in",
@@ -592,21 +606,45 @@
         el.appendChild(vWrap);
       }
 
+      // ── Helper: build photo element ──
+      // imgObj: { src, pos?, rotate? }
+      // kbClass: Ken Burns class (only for photo A)
+      // isB: true = crossfade (slide__photo-b), false = photo A
+      function makePhoto(imgObj, kbClass, isB) {
+        const wrap = document.createElement('div');
+        wrap.className = isB ? 'slide__photo slide__photo-b' : `slide__photo ${kbClass}`;
+
+        if (imgObj.rotate !== undefined) {
+          // Rotated image: <img> element with CSS transform
+          wrap.style.overflow = 'hidden';
+          const img = document.createElement('img');
+          img.src = imgObj.src;
+          img.draggable = false;
+          const is90 = Math.abs(imgObj.rotate) === 90;
+          img.style.cssText = `
+            position:absolute; top:50%; left:50%;
+            ${is90 ? 'width:100vh; height:100vw;' : 'width:100%; height:100%;'}
+            object-fit:cover; object-position:center;
+            transform:translate(-50%,-50%) rotate(${imgObj.rotate}deg);
+            pointer-events:none;
+          `;
+          wrap.appendChild(img);
+        } else {
+          wrap.style.backgroundImage  = `url('${imgObj.src}')`;
+          wrap.style.backgroundPosition = imgObj.pos || 'center center';
+        }
+        return wrap;
+      }
+
       // ── Photo A (always present) ──
-      const bgA = Array.isArray(s.bg) ? s.bg[0] : s.bg;
-      const photoA = document.createElement('div');
-      photoA.className = `slide__photo ${s.kb}`;
-      // If there's a video, photo A is hidden initially (video plays first)
+      const imgA  = Array.isArray(s.bg) ? s.bg[0] : s.bg;
+      const photoA = makePhoto(imgA, s.kb, false);
       if (s.video) photoA.style.opacity = '0';
-      photoA.style.backgroundImage = `url('${bgA}')`;
       el.appendChild(photoA);
 
       // ── Photo B (crossfade, if 2 images) ──
       if (Array.isArray(s.bg) && s.bg[1]) {
-        const photoB = document.createElement('div');
-        photoB.className = 'slide__photo slide__photo-b';
-        photoB.style.backgroundImage = `url('${s.bg[1]}')`;
-        el.appendChild(photoB);
+        el.appendChild(makePhoto(s.bg[1], s.kb, true));
       }
 
       // ── Color grade ──
