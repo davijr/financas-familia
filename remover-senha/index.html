@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PDF Password Remover — Remova senhas de PDFs online</title>
-  <meta name="description" content="Ferramenta gratuita e 100% client-side para remover senhas de arquivos PDF. Nenhum dado é enviado para servidores — todo processamento ocorre no seu navegador." />
-  <meta name="keywords" content="PDF, remover senha, desbloquear PDF, password remover, client-side, privacidade" />
+  <title>Remover Senha — PDF, XLSX e ZIP online</title>
+  <meta name="description" content="Ferramenta gratuita e 100% client-side para remover senhas de arquivos PDF, XLSX e ZIP. Nenhum dado é enviado para servidores — todo processamento ocorre no seu navegador." />
+  <meta name="keywords" content="PDF, XLSX, ZIP, remover senha, desbloquear, password remover, client-side, privacidade" />
   <meta name="robots" content="index, follow" />
   <meta name="theme-color" content="#0a0a0f" />
 
   <!-- Open Graph -->
-  <meta property="og:title" content="PDF Password Remover" />
-  <meta property="og:description" content="Remova senhas de PDFs gratuitamente, direto no navegador." />
+  <meta property="og:title" content="Remover Senha — PDF, XLSX e ZIP" />
+  <meta property="og:description" content="Remova senhas de PDF, XLSX e ZIP gratuitamente, direto no navegador." />
   <meta property="og:type" content="website" />
 
   <!-- Google Fonts -->
@@ -31,9 +31,9 @@
     <!-- Header -->
     <header class="header">
       <div class="header__icon">🔓</div>
-      <h1 class="header__title">PDF Password Remover</h1>
+      <h1 class="header__title">Remover Senha</h1>
       <p class="header__subtitle">
-        Remova senhas de arquivos PDF de forma gratuita e segura.
+        Remova senhas de arquivos <strong>PDF, XLSX e ZIP</strong> de forma gratuita e segura.
         Todo o processamento acontece <strong>no seu navegador</strong> — nenhum arquivo é enviado para servidores.
       </p>
       <span class="header__badge">
@@ -48,10 +48,10 @@
       <div class="dropzone" id="dropzone">
         <div class="dropzone__icon">📄</div>
         <p class="dropzone__text">
-          <strong>Clique para selecionar</strong> ou arraste seus PDFs aqui
-          <span class="dropzone__hint">Apenas arquivos .pdf</span>
+          <strong>Clique para selecionar</strong> ou arraste seus arquivos aqui
+          <span class="dropzone__hint">Arquivos .pdf, .xlsx e .zip</span>
         </p>
-        <input type="file" accept=".pdf,application/pdf" class="dropzone__file-input" id="fileInput" multiple />
+        <input type="file" accept=".pdf,application/pdf,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.zip,application/zip" class="dropzone__file-input" id="fileInput" multiple />
       </div>
 
       <!-- File List -->
@@ -61,7 +61,7 @@
 
       <!-- Password -->
       <div class="password-section" id="passwordSection">
-        <label class="password-section__label" for="passwordInput">🔑 Senha dos PDFs</label>
+        <label class="password-section__label" for="passwordInput">🔑 Senha dos arquivos</label>
         <div class="password-section__input-wrapper">
           <input
             type="password"
@@ -115,15 +115,22 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <!-- App bootstrap: import pdf.js ESM, then load app.js after both libs are ready -->
+  <!-- App bootstrap: import ESM libs (pdf.js, zip.js), then load app.js -->
   <script type="module">
     import * as pdfjsModule from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.min.mjs';
+    import * as zipModule from 'https://cdn.jsdelivr.net/npm/@zip.js/zip.js@2.7.52/index.js';
     window.pdfjsLib = pdfjsModule;
+    window.zipjs = zipModule;
     window.jspdf = window.jspdf || self.jspdf;
 
-    const script = document.createElement('script');
-    script.src = '../js/app.js';
-    document.body.appendChild(script);
+    const ooxml = document.createElement('script');
+    ooxml.src = '../js/ooxml-decrypt.js';
+    ooxml.onload = () => {
+      const script = document.createElement('script');
+      script.src = '../js/app.js';
+      document.body.appendChild(script);
+    };
+    document.body.appendChild(ooxml);
   </script>
 </body>
 </html>

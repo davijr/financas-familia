@@ -36,6 +36,20 @@ const resetBtn = document.getElementById('resetBtn');
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.worker.min.mjs';
 
 // ===== UTILITY =====
+function fileKind(name) {
+  const n = name.toLowerCase();
+  if (n.endsWith('.pdf')) return 'pdf';
+  if (n.endsWith('.xlsx')) return 'xlsx';
+  if (n.endsWith('.zip')) return 'zip';
+  return null;
+}
+
+const KIND_ICON = { pdf: '📄', xlsx: '📊', zip: '🗜️' };
+
+function baseName(name) {
+  return name.replace(/\.(pdf|xlsx|zip)$/i, '');
+}
+
 function formatFileSize(bytes) {
   if (bytes < 1024) return bytes + ' B';
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
@@ -95,8 +109,7 @@ function handleFiles(files) {
   let addedCount = 0;
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
-    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-      // Prevent duplicates by name
+    if (fileKind(file.name)) {
       if (!selectedFiles.some(f => f.name === file.name)) {
         selectedFiles.push(file);
         addedCount++;
@@ -118,7 +131,7 @@ function handleFiles(files) {
     hideElement(downloadSection);
     passwordInput.focus();
   } else if (files.length > 0 && selectedFiles.length === 0) {
-    showStatus('error', '⚠️', 'Por favor, selecione apenas arquivos PDF válidos.');
+    showStatus('error', '⚠️', 'Selecione arquivos .pdf, .xlsx ou .zip válidos.');
   }
 }
 
@@ -151,7 +164,7 @@ function renderFileList() {
     item.id = `file-item-${index}`;
     
     item.innerHTML = `
-      <span class="file-item__icon">📄</span>
+      <span class="file-item__icon">${KIND_ICON[fileKind(file.name)] || '📄'}</span>
       <div class="file-item__details">
         <div class="file-item__name" title="${file.name}">${file.name}</div>
         <div class="file-item__size">${formatFileSize(file.size)}</div>
@@ -228,23 +241,42 @@ downloadBtn.addEventListener('click', () => {
   document.body.removeChild(a);
 });
 
-// ===== CORE PROCESSING FUNCTION =====
-async function processSingleFile(file, password, fileIndex, totalFiles) {
+// ===== CORE PROCESSING DISPATCH =====
+async function processFile(file, password, fileIndex, totalFiles) {
+  const kind = fileKind(file.name);
   const baseProgress = (fileIndex / totalFiles) * 100;
   const progressShare = 100 / totalFiles;
-  
   const updateProgress = (localPercent, text) => {
-    const overallProgress = baseProgress + (localPercent * progressShare / 100);
-    setProgress(overallProgress, text);
+    setProgress(baseProgress + (localPercent * progressShare / 100), text);
   };
 
   updateProgress(5, `Processando: ${file.name}...`);
   updateFileStatus(fileIndex, 'Processando...');
 
-  const arrayBuffer = await file.arrayBuffer();
+  let blob, outName;
+  if (kind === 'pdf') {
+    blob = await processPdf(file, password, updateProgress);
+    outName = baseName(file.name) + '_sem_senha.pdf';
+  } else if (kind === 'zip') {
+    blob = await processZip(file, password, updateProgress);
+    outName = baseName(file.name) + '_sem_senha.zip';
+  } else if (kind === 'xlsx') {
+    blob = await processXlsx(file, password, updateProgress);
+    outName = baseName(file.name) + '_sem_senha.xlsx';
+  } else {
+    throw new Error(`${file.name}: formato não suportado`);
+  }
 
+  updateProgress(95, `Finalizando ${file.name}...`);
+  updateFileStatus(fileIndex, 'Concluído', false);
+  return { name: outName, blob };
+}
+
+// ===== PDF =====
+async function processPdf(file, password, updateProgress) {
+  const arrayBuffer = await file.arrayBuffer();
   updateProgress(10, `Descriptografando: ${file.name}...`);
-  
+
   const loadingTask = pdfjsLib.getDocument({
     data: arrayBuffer,
     password: password || undefined,
@@ -264,7 +296,6 @@ async function processSingleFile(file, password, fileIndex, totalFiles) {
     } else {
       errorMsg = 'Arquivo corrompido';
     }
-    updateFileStatus(fileIndex, 'Falhou', true);
     throw new Error(`${file.name}: ${errorMsg}`);
   }
 
@@ -313,10 +344,97 @@ async function processSingleFile(file, password, fileIndex, totalFiles) {
     pdf.addImage(imgData, 'JPEG', 0, 0, currentWidthMm, currentHeightMm);
   }
 
-  updateProgress(95, `Finalizando ${file.name}...`);
-  updateFileStatus(fileIndex, 'Concluído', false);
-  
   return pdf.output('blob');
+}
+
+// ===== ZIP =====
+async function processZip(file, password, updateProgress) {
+  const { ZipReader, ZipWriter, BlobReader, BlobWriter, Uint8ArrayWriter, Uint8ArrayReader } = window.zipjs;
+  updateProgress(15, `Lendo ${file.name}...`);
+
+  const reader = new ZipReader(new BlobReader(file));
+  let entries;
+  try {
+    entries = await reader.getEntries();
+  } catch (err) {
+    throw new Error(`${file.name}: arquivo ZIP corrompido`);
+  }
+
+  const anyEncrypted = entries.some((e) => e.encrypted);
+  if (anyEncrypted && !password) {
+    await reader.close();
+    throw new Error(`${file.name}: senha ausente`);
+  }
+
+  const writer = new ZipWriter(new BlobWriter('application/zip'));
+
+  let outBlob;
+  try {
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i];
+      updateProgress(15 + Math.round((i / entries.length) * 75), `Descriptografando ${entry.filename}...`);
+      if (entry.directory) {
+        await writer.add(entry.filename, undefined, { directory: true });
+        continue;
+      }
+      let data;
+      try {
+        data = await entry.getData(new Uint8ArrayWriter(), { password });
+      } catch (err) {
+        throw new Error(`${file.name}: senha incorreta`);
+      }
+      await writer.add(entry.filename, new Uint8ArrayReader(data));
+    }
+    outBlob = await writer.close();
+  } finally {
+    await reader.close();
+  }
+
+  return outBlob;
+}
+
+// ===== XLSX =====
+async function processXlsx(file, password, updateProgress) {
+  const arrayBuffer = await file.arrayBuffer();
+  const head = new Uint8Array(arrayBuffer.slice(0, 8));
+  const isCfb = head[0] === 0xd0 && head[1] === 0xcf && head[2] === 0x11 && head[3] === 0xe0;
+
+  let zipBytes;
+  if (isCfb) {
+    updateProgress(20, `Descriptografando ${file.name}...`);
+    if (!password) throw new Error(`${file.name}: senha ausente`);
+    try {
+      zipBytes = await window.ooxmlDecrypt(arrayBuffer, password);
+    } catch (err) {
+      if (err.wrongPassword) throw new Error(`${file.name}: senha incorreta`);
+      throw new Error(`${file.name}: ${err.message}`);
+    }
+  } else {
+    zipBytes = new Uint8Array(arrayBuffer);
+  }
+
+  updateProgress(70, `Removendo proteção de edição de ${file.name}...`);
+  return stripXlsxEditProtection(zipBytes);
+}
+
+async function stripXlsxEditProtection(zipBytes) {
+  const zip = await JSZip.loadAsync(zipBytes);
+  const targets = Object.keys(zip.files).filter(
+    (p) => p === 'xl/workbook.xml' || /^xl\/worksheets\/.*\.xml$/.test(p)
+  );
+
+  for (const path of targets) {
+    let xml = await zip.file(path).async('string');
+    xml = xml
+      .replace(/<sheetProtection[^>]*\/>/g, '')
+      .replace(/<workbookProtection[^>]*\/>/g, '');
+    zip.file(path, xml);
+  }
+
+  return zip.generateAsync({
+    type: 'blob',
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
 }
 
 // ===== MAIN PROCESS =====
@@ -341,13 +459,11 @@ unlockBtn.addEventListener('click', async () => {
     // Process files sequentially
     for (let i = 0; i < selectedFiles.length; i++) {
       try {
-        const fileBlob = await processSingleFile(selectedFiles[i], password, i, selectedFiles.length);
-        processedBlobs.push({
-          name: selectedFiles[i].name.replace(/\.pdf$/i, '') + '_sem_senha.pdf',
-          blob: fileBlob
-        });
+        const result = await processFile(selectedFiles[i], password, i, selectedFiles.length);
+        processedBlobs.push(result);
       } catch (err) {
         console.error(err);
+        updateFileStatus(i, 'Falhou', true);
         errors.push(err.message);
       }
     }
@@ -371,7 +487,7 @@ unlockBtn.addEventListener('click', async () => {
       
       const zipBlob = await zip.generateAsync({ type: 'blob' });
       processedBlobUrl = URL.createObjectURL(zipBlob);
-      processedFileName = 'PDFs_sem_senha.zip';
+      processedFileName = 'arquivos_sem_senha.zip';
     }
 
     setProgress(100, 'Concluído!');
