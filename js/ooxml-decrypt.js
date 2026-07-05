@@ -111,8 +111,50 @@
       return readChain(e.startSector, sectorSize).slice(0, e.size);
     };
 
-    return { getStream };
+    // Overwrite a stream in place with newData (must match the stream's byte length).
+    // Writes into a copy of the source buffer and returns it. Handles regular and mini
+    // streams; for mini streams, patches the underlying mini-stream container sectors.
+    const writeStream = (name, newData) => {
+      const e = entries.find((x) => x.name === name && x.objType === 2);
+      if (!e) throw new Error(`Stream ${name} não encontrado para escrita.`);
+      if (newData.length !== e.size) throw new Error('Tamanho do stream alterado — escrita não suportada.');
+      const outBytes = bytes.slice();
+
+      if (e.size >= miniStreamCutoff) {
+        let sec = e.startSector, written = 0, guard = 0;
+        while (sec !== 0xfffffffe && sec !== 0xffffffff && written < e.size && guard++ < fat.length + 1) {
+          const base = sectorOffset(sec);
+          const take = Math.min(sectorSize, e.size - written);
+          outBytes.set(newData.slice(written, written + take), base);
+          written += take;
+          sec = fat[sec];
+        }
+      } else {
+        // Mini stream lives inside the root storage's regular-sector chain.
+        const miniFatBytes = firstMiniFatSector === 0xfffffffe ? new Uint8Array(0) : readChain(firstMiniFatSector, sectorSize);
+        const miniFatView = new DataView(miniFatBytes.buffer, miniFatBytes.byteOffset, miniFatBytes.byteLength);
+        const rootSectors = [];
+        let rs = root.startSector, g = 0;
+        while (rs !== 0xfffffffe && rs !== 0xffffffff && g++ < fat.length + 1) { rootSectors.push(rs); rs = fat[rs]; }
+        const miniPerSector = sectorSize / miniSectorSize;
+        let sec = e.startSector, written = 0, guard = 0;
+        while (sec !== 0xfffffffe && sec !== 0xffffffff && written < e.size && guard++ < 1e6) {
+          const rootSecIndex = Math.floor((sec * miniSectorSize) / sectorSize);
+          const withinRootSec = (sec * miniSectorSize) % sectorSize;
+          const fileOff = sectorOffset(rootSectors[rootSecIndex]) + withinRootSec;
+          const take = Math.min(miniSectorSize, e.size - written);
+          outBytes.set(newData.slice(written, written + take), fileOff);
+          written += take;
+          sec = miniFatView.getUint32(sec * 4, true);
+        }
+      }
+      return outBytes;
+    };
+
+    return { getStream, writeStream };
   }
+
+  window.cfbTools = { readCFB };
 
   function concat(chunks) {
     const total = chunks.reduce((s, c) => s + c.length, 0);

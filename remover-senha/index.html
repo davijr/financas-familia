@@ -33,7 +33,7 @@
       <div class="header__icon">🔓</div>
       <h1 class="header__title">Remover Senha</h1>
       <p class="header__subtitle">
-        Remova senhas de arquivos <strong>PDF, XLSX e ZIP</strong> de forma gratuita e segura.
+        Remova senhas de arquivos <strong>PDF, XLSX, XLS e ZIP</strong> de forma gratuita e segura.
         Todo o processamento acontece <strong>no seu navegador</strong> — nenhum arquivo é enviado para servidores.
       </p>
       <span class="header__badge">
@@ -49,9 +49,9 @@
         <div class="dropzone__icon">📄</div>
         <p class="dropzone__text">
           <strong>Clique para selecionar</strong> ou arraste seus arquivos aqui
-          <span class="dropzone__hint">Arquivos .pdf, .xlsx e .zip</span>
+          <span class="dropzone__hint">Arquivos .pdf, .xlsx, .xls e .zip</span>
         </p>
-        <input type="file" accept=".pdf,application/pdf,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.zip,application/zip" class="dropzone__file-input" id="fileInput" multiple />
+        <input type="file" accept=".pdf,application/pdf,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,.zip,application/zip" class="dropzone__file-input" id="fileInput" multiple />
       </div>
 
       <!-- File List -->
@@ -123,14 +123,18 @@
     window.zipjs = zipModule;
     window.jspdf = window.jspdf || self.jspdf;
 
-    const ooxml = document.createElement('script');
-    ooxml.src = '../js/ooxml-decrypt.js';
-    ooxml.onload = () => {
-      const script = document.createElement('script');
-      script.src = '../js/app.js';
-      document.body.appendChild(script);
-    };
-    document.body.appendChild(ooxml);
+    const loadScript = (src) => new Promise((resolve) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      document.body.appendChild(s);
+    });
+
+    (async () => {
+      await loadScript('../js/ooxml-decrypt.js');
+      await loadScript('../js/xls-decrypt.js');
+      await loadScript('../js/app.js');
+    })();
   </script>
 </body>
 </html>

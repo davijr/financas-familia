@@ -40,14 +40,15 @@ function fileKind(name) {
   const n = name.toLowerCase();
   if (n.endsWith('.pdf')) return 'pdf';
   if (n.endsWith('.xlsx')) return 'xlsx';
+  if (n.endsWith('.xls')) return 'xls';
   if (n.endsWith('.zip')) return 'zip';
   return null;
 }
 
-const KIND_ICON = { pdf: '📄', xlsx: '📊', zip: '🗜️' };
+const KIND_ICON = { pdf: '📄', xlsx: '📊', xls: '📊', zip: '🗜️' };
 
 function baseName(name) {
-  return name.replace(/\.(pdf|xlsx|zip)$/i, '');
+  return name.replace(/\.(pdf|xlsx|xls|zip)$/i, '');
 }
 
 function formatFileSize(bytes) {
@@ -263,6 +264,9 @@ async function processFile(file, password, fileIndex, totalFiles) {
   } else if (kind === 'xlsx') {
     blob = await processXlsx(file, password, updateProgress);
     outName = baseName(file.name) + '_sem_senha.xlsx';
+  } else if (kind === 'xls') {
+    blob = await processXls(file, password, updateProgress);
+    outName = baseName(file.name) + '_sem_senha.xls';
   } else {
     throw new Error(`${file.name}: formato não suportado`);
   }
@@ -415,6 +419,22 @@ async function processXlsx(file, password, updateProgress) {
 
   updateProgress(70, `Removendo proteção de edição de ${file.name}...`);
   return stripXlsxEditProtection(zipBytes);
+}
+
+async function processXls(file, password, updateProgress) {
+  updateProgress(20, `Descriptografando ${file.name}...`);
+  const arrayBuffer = await file.arrayBuffer();
+  if (!password) {
+    // May be a non-encrypted .xls; xlsDecrypt returns it unchanged if no FILEPASS.
+  }
+  let out;
+  try {
+    out = await window.xlsDecrypt(arrayBuffer, password || '');
+  } catch (err) {
+    if (err.wrongPassword) throw new Error(`${file.name}: senha incorreta`);
+    throw new Error(`${file.name}: ${err.message}`);
+  }
+  return new Blob([out], { type: 'application/vnd.ms-excel' });
 }
 
 async function stripXlsxEditProtection(zipBytes) {
